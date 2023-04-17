@@ -1,0 +1,26 @@
+{
+	"folders": [
+		{
+			"path": "../currency-exchange"
+		},
+		{
+			"name": "currency-conversion",
+			"path": "../currency-conversion"
+		},
+		{
+			"name": "naming-server",
+			"path": "../naming-server"
+		},
+		{
+			"name": "api-gateway",
+			"path": "../api-gateway"
+		},
+		{
+			"name": "users-service",
+			"path": "../users-service"
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "interactive"
+	}
+}
