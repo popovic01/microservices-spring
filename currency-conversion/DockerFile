@@ -1,0 +1,5 @@
+FROM openjdk:17
+# isti port kao i u application properties
+EXPOSE 8000 
+ADD target/currency-conversion.jar currency-conversion.jar
+ENTRYPOINT ["java","-jar","/currency-conversion.jar"]

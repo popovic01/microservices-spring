@@ -1,4 +1,5 @@
 FROM openjdk:17
-EXPOSE 8000 # isti port kao i u application properties
+# isti port kao i u application properties
+EXPOSE 8000 
 ADD target/currency-exchange.jar currency-exchange.jar
 ENTRYPOINT ["java","-jar","/currency-exchange.jar"]
