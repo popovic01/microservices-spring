@@ -1,5 +1,5 @@
 FROM openjdk:17
 # isti port kao i u application properties
-EXPOSE 8000 
+EXPOSE 8770 
 ADD target/users-service.jar users-service.jar
 ENTRYPOINT ["java","-jar","/users-service.jar"]

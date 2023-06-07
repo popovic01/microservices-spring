@@ -1,5 +1,5 @@
 FROM openjdk:17
 # isti port kao i u application properties
-EXPOSE 8000 
+EXPOSE 8765 
 ADD target/api-gateway.jar api-gateway.jar
 ENTRYPOINT ["java","-jar","/api-gateway.jar"]

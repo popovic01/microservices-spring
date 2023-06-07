@@ -1,5 +1,5 @@
 FROM openjdk:17
 # isti port kao i u application properties
-EXPOSE 8000 
+EXPOSE 8761 
 ADD target/naming-server.jar naming-server.jar
 ENTRYPOINT ["java","-jar","/naming-server.jar"]
