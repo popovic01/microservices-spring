@@ -70,9 +70,12 @@ public class ApiGatewayAuthentication {
 	@Bean
 	public SecurityWebFilterChain filterChain(ServerHttpSecurity http) throws Exception {
 		http.csrf().disable()
-		.authorizeExchange().pathMatchers(HttpMethod.POST).hasRole("ADMIN")
+		.authorizeExchange()
+		.pathMatchers(HttpMethod.POST).hasRole("ADMIN")
 		.pathMatchers("/currency-exchange/**").permitAll()
-		.pathMatchers("/users-service/**").permitAll()
+		.pathMatchers(HttpMethod.DELETE, "/users-service/**").hasRole("OWNER")
+		.pathMatchers(HttpMethod.PUT, "/users-service/**").hasAnyRole("OWNER","ADMIN")
+		// .pathMatchers("/users-service/**").permitAll()
 		.pathMatchers("/currency-conversion").hasAnyRole("ADMIN","USER")
 		.and()
 		.httpBasic();
