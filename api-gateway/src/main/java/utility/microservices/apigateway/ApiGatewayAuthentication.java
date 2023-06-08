@@ -22,24 +22,6 @@ import utility.microservices.apigateway.dtos.CustomUserDto;
 @Configuration
 @EnableWebFluxSecurity
 public class ApiGatewayAuthentication {
-    
-    /*@Bean
-	public MapReactiveUserDetailsService userDetailsService(BCryptPasswordEncoder encoder) {
-		List<UserDetails> users = new ArrayList<>();
-
-        //we create two users with username, password and role
-		users.add(User.withUsername("user")
-				.password(encoder.encode("password1"))
-				.roles("USER")
-				.build());
-
-		users.add(User.withUsername("admin")
-				.password(encoder.encode("password2"))
-				.roles("ADMIN")
-				.build());
-
-		return new MapReactiveUserDetailsService(users);
-	}*/
 
     @Bean
 	public MapReactiveUserDetailsService userDetailsService(BCryptPasswordEncoder encoder) {
@@ -73,9 +55,9 @@ public class ApiGatewayAuthentication {
 		.authorizeExchange()
 		.pathMatchers(HttpMethod.POST).hasRole("ADMIN")
 		.pathMatchers("/currency-exchange/**").permitAll()
-		.pathMatchers(HttpMethod.DELETE, "/users-service/**").hasRole("OWNER")
-		.pathMatchers(HttpMethod.PUT, "/users-service/**").hasAnyRole("OWNER","ADMIN")
-		// .pathMatchers("/users-service/**").permitAll()
+		.pathMatchers(HttpMethod.DELETE, "/users-service/**").hasRole("OWNER") //jedino owner moze da brise
+		.pathMatchers(HttpMethod.PUT, "/users-service/**").hasAnyRole("OWNER","ADMIN") //owner i admin mogu da rade update, ali admin moze samo usera
+		.pathMatchers(HttpMethod.POST, "/users-service/**").hasAnyRole("OWNER","ADMIN") //owner i admin mogu da dodaju, ali admin moze samo usera
 		.pathMatchers("/currency-conversion").hasAnyRole("ADMIN","USER")
 		.and()
 		.httpBasic();
