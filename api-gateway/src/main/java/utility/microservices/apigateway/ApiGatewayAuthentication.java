@@ -53,12 +53,12 @@ public class ApiGatewayAuthentication {
 	public SecurityWebFilterChain filterChain(ServerHttpSecurity http) throws Exception {
 		http.csrf().disable()
 		.authorizeExchange()
-		.pathMatchers(HttpMethod.POST).hasRole("ADMIN")
-		.pathMatchers("/currency-exchange/**").permitAll()
 		.pathMatchers(HttpMethod.DELETE, "/users-service/**").hasRole("OWNER") //jedino owner moze da brise
 		.pathMatchers(HttpMethod.PUT, "/users-service/**").hasAnyRole("OWNER","ADMIN") //owner i admin mogu da rade update, ali admin moze samo usera
 		.pathMatchers(HttpMethod.POST, "/users-service/**").hasAnyRole("OWNER","ADMIN") //owner i admin mogu da dodaju, ali admin moze samo usera
-		.pathMatchers("/currency-conversion").hasAnyRole("ADMIN","USER")
+		.pathMatchers("/currency-exchange/**").permitAll()
+		.pathMatchers("/currency-conversion/**").hasRole("USER")
+		.pathMatchers("/bank-account/**").hasRole("ADMIN")
 		.and()
 		.httpBasic();
 

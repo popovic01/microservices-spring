@@ -6,5 +6,5 @@ public interface CustomUserRepository extends JpaRepository<CustomUser, Long> {
     
     boolean existsByRole(String role);
     CustomUser findByRole(String role);
-
+    boolean existsByEmailAndRole(String email, String role);
 }

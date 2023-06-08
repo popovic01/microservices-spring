@@ -1,6 +1,8 @@
 package utility.microservices.usersservice;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class UserController {
@@ -22,6 +25,11 @@ public class UserController {
 	@GetMapping("/users-service/users")
 	public List<CustomUser> getAllUsers(){
 		return repo.findAll();
+	}
+
+	@GetMapping("/users-service/users/{email}")
+	public ResponseEntity<Boolean> existsByEmail(@PathVariable("email") String email){
+		return ResponseEntity.status(200).body(repo.existsByEmailAndRole(email, "USER"));
 	}
 
 	@PostMapping("/users-service/users")
@@ -51,7 +59,14 @@ public class UserController {
 	@DeleteMapping("/users-service/users/{id}")
 	public ResponseEntity<CustomUser> deleteUser(@PathVariable("id") Long id) {
 		if (repo.existsById(id)) {
+			String email = repo.findById(id).get().getEmail();
 			repo.deleteById(id);
+
+			HashMap<String, String> uriVariables = new HashMap<String, String>();
+            uriVariables.put("email", email);
+			
+			// deleting connected bank account
+			new RestTemplate().delete("http://localhost:8200//bank-account/{email}", uriVariables);
 			return new ResponseEntity<CustomUser>(HttpStatus.OK);
 		}
 		return new ResponseEntity<CustomUser>(HttpStatus.NO_CONTENT);
