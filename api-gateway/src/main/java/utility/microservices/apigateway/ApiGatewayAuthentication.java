@@ -60,6 +60,7 @@ public class ApiGatewayAuthentication {
 		.pathMatchers("/currency-conversion/**").hasRole("USER")
 		.pathMatchers("/bank-account/**").hasRole("ADMIN")
 		.pathMatchers("/crypto-wallet/**").hasRole("ADMIN")
+		.pathMatchers("/crypto-exchange/**").permitAll()
 		.and()
 		.httpBasic();
 

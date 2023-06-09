@@ -1,4 +1,4 @@
-package currency.microservices.cryptoexchange;
+package crypto.microservices.cryptoexchange;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
