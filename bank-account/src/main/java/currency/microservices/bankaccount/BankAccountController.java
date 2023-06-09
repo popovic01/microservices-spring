@@ -64,7 +64,7 @@ public class BankAccountController {
     
             // user with email exists
             if (response.getBody()) {
-                if (repo.existsByEmail(account.getEmail())) {
+                if (repo.existsByEmail(account.getEmail()) && repo.findByEmail(account.getEmail()).getId() != repo.findById(account.getId()).get().getId()) {
                     return ResponseEntity.status(409).body("Bank account connected with email " + account.getEmail() + " already exists");
                 }
                 repo.save(account);
@@ -82,9 +82,20 @@ public class BankAccountController {
 		if (repo.existsByEmail(email)) {
             BankAccount account = repo.findByEmail(email);
 			repo.delete(account);
+
+			HashMap<String, String> uriVariables = new HashMap<String, String>();
+            uriVariables.put("email", email);
+			new RestTemplate().delete("http://localhost:8300/crypto-wallet/{email}", uriVariables);
+
 			return new ResponseEntity<BankAccount>(HttpStatus.OK);
 		}
 		return new ResponseEntity<BankAccount>(HttpStatus.NO_CONTENT);
     }
+
+    
+	@GetMapping("/bank-account/{email}")
+	public ResponseEntity<Boolean> existsByEmail(@PathVariable("email") String email){
+		return ResponseEntity.status(200).body(repo.existsByEmail(email));
+	}
     
 }
