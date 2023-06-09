@@ -1,8 +1,9 @@
 package utility.microservices.usersservice;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -33,7 +35,12 @@ public class UserController {
 	}
 
 	@PostMapping("/users-service/users")
-	public ResponseEntity<?> createUser(@RequestBody CustomUser user) {
+	public ResponseEntity<?> createUser(@RequestBody CustomUser user, @RequestHeader("Authorization") String authorization) {
+		String email = getEmail(authorization);
+
+		if (repo.existsByEmailAndRole(email, "ADMIN") && !repo.findById(user.getId()).get().getRole().equalsIgnoreCase("USER"))
+			return ResponseEntity.status(403).body("You can only add user with USER role");
+
 		if (user.getRole().equals("OWNER")) {
 			boolean ownerExists = repo.existsByRole("OWNER");
 			if (ownerExists) {
@@ -45,8 +52,13 @@ public class UserController {
 	}
 
 	@PutMapping("/users-service/users")
-	public ResponseEntity<?> editUser(@RequestBody CustomUser user) {
+	public ResponseEntity<?> editUser(@RequestBody CustomUser user, @RequestHeader("Authorization") String authorization) {
 		if (repo.existsById(user.getId())) {
+			String email = getEmail(authorization);
+		
+			if (repo.existsByEmailAndRole(email, "ADMIN") && !repo.findById(user.getId()).get().getRole().equalsIgnoreCase("USER"))
+				return ResponseEntity.status(403).body("You can only update user with USER role");
+				
 			if (user.getRole().equals("OWNER") && user.getId() != repo.findByRole("OWNER").getId()) {
 				return ResponseEntity.status(409).body("Already exists user with OWNER role");
 			}
@@ -71,5 +83,15 @@ public class UserController {
 			return new ResponseEntity<CustomUser>(HttpStatus.OK);
 		}
 		return new ResponseEntity<CustomUser>(HttpStatus.NO_CONTENT);
+	}
+
+	private String getEmail(String authorization) {
+		// Extract the username and password from the Authorization header
+		String base64Credentials = authorization.substring("Basic".length()).trim();
+		byte[] decoded = Base64.getDecoder().decode(base64Credentials);
+		String credentials = new String(decoded, StandardCharsets.UTF_8);
+		String[] emailPassword = credentials.split(":", 2);
+		String email = emailPassword[0];
+		return email;
 	}
 }

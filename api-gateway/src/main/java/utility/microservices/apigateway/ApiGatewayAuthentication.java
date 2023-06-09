@@ -53,6 +53,7 @@ public class ApiGatewayAuthentication {
 	public SecurityWebFilterChain filterChain(ServerHttpSecurity http) throws Exception {
 		http.csrf().disable()
 		.authorizeExchange()
+		.pathMatchers(HttpMethod.GET, "/users-service/**").permitAll() //jedino owner moze da brise
 		.pathMatchers(HttpMethod.DELETE, "/users-service/**").hasRole("OWNER") //jedino owner moze da brise
 		.pathMatchers(HttpMethod.PUT, "/users-service/**").hasAnyRole("OWNER","ADMIN") //owner i admin mogu da rade update, ali admin moze samo usera
 		.pathMatchers(HttpMethod.POST, "/users-service/**").hasAnyRole("OWNER","ADMIN") //owner i admin mogu da dodaju, ali admin moze samo usera
