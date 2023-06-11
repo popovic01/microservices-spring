@@ -7,7 +7,7 @@ public class CurrencyConversion {
     //atributtes same as in CurrencyExchange class
 	private String from;
 	private String to;
-	private BigDecimal conversionMultiple;
+	private BigDecimal toValue;
 	private String environment;
 
 	//atributtes specific for CurrencyConversion
@@ -18,11 +18,11 @@ public class CurrencyConversion {
         
     }
 
-    public CurrencyConversion(String from, String to, BigDecimal conversionMultiple, String environment,
+    public CurrencyConversion(String from, String to, BigDecimal toValue, String environment,
         Double quantity, BigDecimal conversionTotal) {
         this.from = from;
         this.to = to;
-        this.conversionMultiple = conversionMultiple;
+        this.toValue = toValue;
         this.environment = environment;
         this.conversionTotal = conversionTotal;
         this.quantity = quantity;
@@ -44,12 +44,12 @@ public class CurrencyConversion {
         this.to = to;
     }
 
-    public BigDecimal getConversionMultiple() {
-        return conversionMultiple;
+    public BigDecimal getToValue() {
+        return toValue;
     }
 
-    public void setConversionMultiple(BigDecimal conversionMultiple) {
-        this.conversionMultiple = conversionMultiple;
+    public void setToValue(BigDecimal toValue) {
+        this.toValue = toValue;
     }
 
     public String getEnvironment() {

@@ -78,7 +78,7 @@ public class UserController {
             uriVariables.put("email", email);
 			
 			// deleting connected bank account
-			new RestTemplate().delete("http://localhost:8200/bank-account/{email}", uriVariables);
+			new RestTemplate().delete("http://localhost:8405/bank-account/{email}", uriVariables);
 			new RestTemplate().delete("http://localhost:8900/crypto-wallet/{email}", uriVariables);
 			return new ResponseEntity<CustomUser>(HttpStatus.OK);
 		}

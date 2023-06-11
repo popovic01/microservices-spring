@@ -18,16 +18,16 @@ public class CryptoExchange {
 	@Column(name = "currency_to")
 	private String to;
 
-	private BigDecimal conversionMultiple;
+	private BigDecimal toValue;
 
     public CryptoExchange() {
     }
 
-    public CryptoExchange(long id, String from, String to, BigDecimal conversionMultiple) {
+    public CryptoExchange(long id, String from, String to, BigDecimal toValue) {
         this.id = id;
         this.from = from;
         this.to = to;
-        this.conversionMultiple = conversionMultiple;
+        this.toValue = toValue;
     }
 
     public long getId() {
@@ -54,12 +54,12 @@ public class CryptoExchange {
         this.to = to;
     }
 
-    public BigDecimal getConversionMultiple() {
-        return conversionMultiple;
+    public BigDecimal getToValue() {
+        return toValue;
     }
 
-    public void setConversionMultiple(BigDecimal conversionMultiple) {
-        this.conversionMultiple = conversionMultiple;
+    public void setToValue(BigDecimal toValue) {
+        this.toValue = toValue;
     }
     
 }

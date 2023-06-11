@@ -43,8 +43,8 @@ public class CurrencyConversionController {
 
         CurrencyConversion cc = response.getBody();
 
-        return new CurrencyConversion(from, to, cc.getConversionMultiple(),
-         cc.getEnvironment(), quantity, cc.getConversionMultiple().multiply(BigDecimal.valueOf(quantity)));
+        return new CurrencyConversion(from, to, cc.getToValue(),
+         cc.getEnvironment(), quantity, cc.getToValue().multiply(BigDecimal.valueOf(quantity)));
     }
 
     //localhost:8100/currency-conversion?from=EUR&to=RSD&quantity=50 - request example
@@ -65,15 +65,15 @@ public class CurrencyConversionController {
                 getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}",
                     CurrencyConversion.class, uriVariables);
 
-            CurrencyConversion responseBody = response.getBody(); //the response contains ConversionMultiple and Environment
+            CurrencyConversion responseBody = response.getBody(); //the response contains ToValue and Environment
 
             // request to bank account service
             BankAccountDto accountDto = new BankAccountDto(email, from, to, BigDecimal.valueOf(quantity), 
-                responseBody.getConversionMultiple().multiply(BigDecimal.valueOf(quantity)));
+                responseBody.getToValue().multiply(BigDecimal.valueOf(quantity)));
 
             ResponseEntity<BankAccountResponseDto> responseBank = 
                 new RestTemplate().
-                postForEntity("http://localhost:8200/bank-account/conversion", 
+                postForEntity("http://localhost:8405/bank-account/conversion", 
                     accountDto, BankAccountResponseDto.class);
 
             return ResponseEntity.status(HttpStatus.OK).body(responseBank.getBody());
@@ -88,8 +88,8 @@ public class CurrencyConversionController {
         try {
              ResponseEntity<CurrencyConversion> response = proxy.getExchange(from, to);
              CurrencyConversion responseBody = response.getBody();
-             return ResponseEntity.ok(new CurrencyConversion(from, to, responseBody.getConversionMultiple(), responseBody.getEnvironment() + " feign",
-                quantity, responseBody.getConversionMultiple().multiply(BigDecimal.valueOf(quantity))));
+             return ResponseEntity.ok(new CurrencyConversion(from, to, responseBody.getToValue(), responseBody.getEnvironment() + " feign",
+                quantity, responseBody.getToValue().multiply(BigDecimal.valueOf(quantity))));
         } catch (FeignException e) {
             return ResponseEntity.status(e.status()).body(e.getMessage());
         }

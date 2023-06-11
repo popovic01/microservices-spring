@@ -1,0 +1,141 @@
+package currency.microservices.tradeservice;
+
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.HashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+
+import currency.microservices.tradeservice.dtos.WalletAccountDto;
+import currency.microservices.tradeservice.dtos.BankAccountResponseDto;
+import currency.microservices.tradeservice.dtos.CryptoWalletResponseDto;
+import currency.microservices.tradeservice.dtos.TradeServiceDto;
+
+@RestController
+public class TradeServiceController {
+    
+    @Autowired //dependency injection
+    private TradeServiceRepository repo;
+    
+    @PostMapping("/trade-service")
+    public ResponseEntity<?> getExchange(@RequestBody TradeServiceDto request, @RequestHeader("Authorization") String authorization) {
+
+        request.setFromActual(request.getFrom());        
+        request.setToActual(request.getTo());
+        request.setQuantityActual(request.getQuantity());
+
+        HashMap<String, String> uriVariables = new HashMap<String, String>();
+        TradeService kurs;
+
+        if (request.getFrom().toUpperCase().equals("GBP") 
+            || request.getFrom().toUpperCase().equals("CHF") 
+            || request.getFrom().toUpperCase().equals("RSD")) {
+            
+            // convert to eur and then to crypto
+            uriVariables.put("from", request.getFrom().toUpperCase());
+            uriVariables.put("to", "EUR");
+
+            // send request to currency-exchange microservice
+            ResponseEntity<WalletAccountDto> response = 
+                new RestTemplate()
+                .getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}", WalletAccountDto.class, uriVariables);   
+                
+            request.setFrom(response.getBody().getTo());
+            request.setQuantity(response.getBody().getToValue().multiply(request.getQuantity()));
+        }
+        else if (request.getTo().toUpperCase().equals("GBP") 
+            || request.getTo().toUpperCase().equals("CHF") 
+            || request.getTo().toUpperCase().equals("RSD")) {
+
+            kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), "eur"); 
+
+            // convert to eur and then to fiat
+            uriVariables.put("from", "EUR");
+            uriVariables.put("to", request.getTo());
+
+            // send request to currency-exchange microservice
+            ResponseEntity<WalletAccountDto> response = 
+                new RestTemplate()
+                .getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}", WalletAccountDto.class, uriVariables);   
+                
+            request.setTo(response.getBody().getFrom());
+            request.setQuantity(response.getBody().getToValue().multiply(kurs.getToValue()));
+        }
+
+        kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()); //find this in database, based on from and to values
+
+        if (kurs != null) {
+
+            String email = getEmail(authorization);
+
+            // crypto to fiat
+            if (request.getFrom().toLowerCase().equals("btc") || request.getFrom().toLowerCase().equals("eth")
+                || request.getFrom().toLowerCase().equals("bnb") || request.getFrom().toLowerCase().equals("ada")) {
+
+                return ResponseEntity.status(200).body(cryptoToFiat(request, email).getBody());             
+            }
+            // fiat to crypto
+            else if (request.getFrom().toLowerCase().equals("eur") || request.getFrom().toLowerCase().equals("usd"))
+            {
+                request.setQuantity(kurs.getToValue());
+                return ResponseEntity.status(200).body(fiatToCrypto(request, email).getBody());
+            }
+        } 
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Requested exchange could not be found!");
+    }
+
+    private ResponseEntity<?> fiatToCrypto(TradeServiceDto request, String email)
+    {
+        // call bank account service, check if there is enough money and update bank account
+        WalletAccountDto requestDto = new WalletAccountDto(email, request.getFromActual(), request.getTo(), request.getQuantityActual(), 
+            repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantity()));
+
+        // call crypto wallet service, check if there is enough money and update wallet  
+        new RestTemplate().
+            postForEntity("http://localhost:8405/bank-account/conversion", 
+            requestDto, BankAccountResponseDto.class);   
+                            
+        ResponseEntity<CryptoWalletResponseDto> responseWallet = 
+            new RestTemplate().
+            postForEntity("http://localhost:8900/crypto-wallet/conversion", 
+                requestDto, CryptoWalletResponseDto.class);  
+
+        return responseWallet;
+    }
+
+    private ResponseEntity<?> cryptoToFiat(TradeServiceDto request, String email)
+    {
+        WalletAccountDto requestDto = new WalletAccountDto(email, request.getFrom(), request.getToActual(), request.getQuantityActual(), 
+            repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantity()));
+
+        // call crypto wallet service, check if there is enough money and update wallet  
+        new RestTemplate().
+            postForEntity("http://localhost:8900/crypto-wallet/conversion", 
+            requestDto, CryptoWalletResponseDto.class);   
+                            
+        ResponseEntity<BankAccountResponseDto> responseAccount = 
+            new RestTemplate().
+                postForEntity("http://localhost:8405/bank-account/conversion", 
+                requestDto, BankAccountResponseDto.class);   
+
+        return responseAccount;
+    }
+
+    private String getEmail(String authorization) {
+        // Extract the username and password from the Authorization header
+        String base64Credentials = authorization.substring("Basic".length()).trim();
+        byte[] decoded = Base64.getDecoder().decode(base64Credentials);
+        String credentials = new String(decoded, StandardCharsets.UTF_8);
+        String[] emailPassword = credentials.split(":", 2);
+        String email = emailPassword[0];
+        return email;
+	}
+}

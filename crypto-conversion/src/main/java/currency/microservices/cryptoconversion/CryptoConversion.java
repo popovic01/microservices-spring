@@ -7,7 +7,7 @@ public class CryptoConversion {
     //atributtes same as in CryptoExchange class
 	private String from;
 	private String to;
-	private BigDecimal conversionMultiple;
+	private BigDecimal toValue;
 	private String environment;
 
 	//atributtes specific for CryptoConversion
@@ -17,11 +17,11 @@ public class CryptoConversion {
     public CryptoConversion() {
     }
 
-    public CryptoConversion(String from, String to, BigDecimal conversionMultiple, String environment,
+    public CryptoConversion(String from, String to, BigDecimal toValue, String environment,
             BigDecimal conversionTotal, Double quantity) {
         this.from = from;
         this.to = to;
-        this.conversionMultiple = conversionMultiple;
+        this.toValue = toValue;
         this.environment = environment;
         this.conversionTotal = conversionTotal;
         this.quantity = quantity;
@@ -43,12 +43,12 @@ public class CryptoConversion {
         this.to = to;
     }
 
-    public BigDecimal getConversionMultiple() {
-        return conversionMultiple;
+    public BigDecimal getToValue() {
+        return toValue;
     }
 
-    public void setConversionMultiple(BigDecimal conversionMultiple) {
-        this.conversionMultiple = conversionMultiple;
+    public void setToValue(BigDecimal toValue) {
+        this.toValue = toValue;
     }
 
     public String getEnvironment() {

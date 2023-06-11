@@ -39,11 +39,11 @@ public class CryptoConversionController {
                 getForEntity("http://localhost:8400/crypto-exchange/from/{from}/to/{to}",
                 CryptoConversion.class, uriVariables);
 
-                CryptoConversion responseBody = response.getBody(); //the response contains ConversionMultiple and Environment
+                CryptoConversion responseBody = response.getBody(); //the response contains ToValue and Environment
 
                 // request to bank wallet service
                 CryptoWalletDto walletDto = new CryptoWalletDto(email, from, to, BigDecimal.valueOf(quantity),
-                    responseBody.getConversionMultiple().multiply(BigDecimal.valueOf(quantity)));
+                    responseBody.getToValue().multiply(BigDecimal.valueOf(quantity)));
 
                 ResponseEntity<CryptoWalletResponseDto> responseWallet = 
                 new RestTemplate().

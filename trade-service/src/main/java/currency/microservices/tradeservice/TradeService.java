@@ -1,15 +1,14 @@
-package currency.microservices.currencyexchange;
+package currency.microservices.tradeservice;
 
 import java.math.BigDecimal;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Transient;
 
 @Entity
-public class CurrencyExchange {
-    
+public class TradeService {
+
     @Id
 	private long id;
 
@@ -20,20 +19,15 @@ public class CurrencyExchange {
 	private String to;
 
 	private BigDecimal toValue;
-
-	@Transient
-	private String environment;
-
-    public CurrencyExchange() {
-
+  
+    public TradeService() {
     }
 
-    public CurrencyExchange(long id, String from, String to, BigDecimal toValue, String environment) {
+    public TradeService(long id, String from, String to, BigDecimal toValue) {
         this.id = id;
         this.from = from;
         this.to = to;
         this.toValue = toValue;
-        this.environment = environment;
     }
 
     public long getId() {
@@ -66,15 +60,6 @@ public class CurrencyExchange {
 
     public void setToValue(BigDecimal toValue) {
         this.toValue = toValue;
-    }
-
-    public String getEnvironment() {
-        return environment;
-    }
-
-    public void setEnvironment(String environment) {
-        this.environment = environment;
-    }
-
+    } 
     
 }

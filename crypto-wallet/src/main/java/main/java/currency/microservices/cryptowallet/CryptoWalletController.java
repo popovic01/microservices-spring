@@ -38,7 +38,7 @@ public class CryptoWalletController {
         // send request to users microservice
         ResponseEntity<Boolean> response = 
             new RestTemplate()
-            .getForEntity("http://localhost:8200/bank-account/{email}", Boolean.class, uriVariables);
+            .getForEntity("http://localhost:8405/bank-account/{email}", Boolean.class, uriVariables);
 
         // account with email exists
         if (response.getBody()) {
@@ -62,7 +62,7 @@ public class CryptoWalletController {
             // send request to users microservice
             ResponseEntity<Boolean> response = 
                 new RestTemplate()
-                .getForEntity("http://localhost:8200/bank-account/{email}", Boolean.class, uriVariables);
+                .getForEntity("http://localhost:8405/bank-account/{email}", Boolean.class, uriVariables);
     
             // account with email exists
             if (response.getBody()) {

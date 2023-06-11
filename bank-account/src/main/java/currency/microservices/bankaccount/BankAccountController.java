@@ -24,7 +24,7 @@ public class BankAccountController {
     @Autowired //dependency injection
     private BankAccountRepository repo;
 
-    //localhost:8200/bank-account/accounts - request example
+    //localhost:8405/bank-account/accounts - request example
     @GetMapping("/bank-account/accounts")
 	public List<BankAccount> getAllAccounts(){
 		return repo.findAll();
@@ -61,7 +61,7 @@ public class BankAccountController {
 
         BankAccount accountDb = repo.findByEmail(account.getEmail());
 
-        switch (account.getFrom()) {
+        switch (account.getFrom().toUpperCase()) {
             case "EUR": {
                 if (repo.findByEmail(account.getEmail()).getEur().compareTo(account.getFromValue()) == -1)
 		            return ResponseEntity.status(400).body("You don't have enough " + account.getFrom() + " for the exchange");
@@ -104,7 +104,7 @@ public class BankAccountController {
             }
         }
 
-        switch (account.getTo()) {
+        switch (account.getTo().toUpperCase()) {
             case "EUR": {
                 accountDb.setEur(repo.findByEmail(account.getEmail()).getEur().add(account.getToValue()));
                 break;
