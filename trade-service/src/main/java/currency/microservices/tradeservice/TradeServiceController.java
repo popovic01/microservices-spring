@@ -1,6 +1,5 @@
 package currency.microservices.tradeservice;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -8,6 +7,7 @@ import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import currency.microservices.tradeservice.dtos.WalletAccountDto;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import currency.microservices.tradeservice.dtos.BankAccountResponseDto;
 import currency.microservices.tradeservice.dtos.CryptoWalletResponseDto;
 import currency.microservices.tradeservice.dtos.TradeServiceDto;
@@ -26,6 +28,7 @@ public class TradeServiceController {
     private TradeServiceRepository repo;
     
     @PostMapping("/trade-service")
+    @RateLimiter(name = "default")
     public ResponseEntity<?> getExchange(@RequestBody TradeServiceDto request, @RequestHeader("Authorization") String authorization) {
 
         request.setFromActual(request.getFrom());        
@@ -138,4 +141,9 @@ public class TradeServiceController {
         String email = emailPassword[0];
         return email;
 	}
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<String> rateLimiterExceptionHandler(RequestNotPermitted ex) {
+        return ResponseEntity.status(503).body("Currency exchange service can only serve up to 2 requests every 30 seconds");
+    }
 }

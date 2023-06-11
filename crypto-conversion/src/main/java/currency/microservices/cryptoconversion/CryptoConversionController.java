@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,13 +17,16 @@ import org.springframework.web.client.RestTemplate;
 
 import currency.microservices.cryptoconversion.dtos.CryptoWalletDto;
 import currency.microservices.cryptoconversion.dtos.CryptoWalletResponseDto;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 @RestController
 public class CryptoConversionController {
 
     //localhost:8100/crypto-conversion?from=EUR&to=RSD&quantity=50 - request example
 	@GetMapping("/crypto-conversion") //query params
-	public ResponseEntity<?> getConversionParams
+    @RateLimiter(name = "default")
+    public ResponseEntity<?> getConversionParams
         (@RequestParam String from, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity,
         @RequestHeader("Authorization") String authorization) {
 
@@ -65,5 +69,10 @@ public class CryptoConversionController {
 		String email = emailPassword[0];
 		return email;
 	}
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<String> rateLimiterExceptionHandler(RequestNotPermitted ex) {
+        return ResponseEntity.status(503).body("Currency exchange service can only serve up to 2 requests every 30 seconds");
+    }
     
 }

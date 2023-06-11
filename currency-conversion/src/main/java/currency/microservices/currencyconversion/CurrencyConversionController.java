@@ -21,6 +21,8 @@ import org.springframework.web.client.RestTemplate;
 import currency.microservices.currencyconversion.dtos.BankAccountDto;
 import currency.microservices.currencyconversion.dtos.BankAccountResponseDto;
 import feign.FeignException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 @RestController
 public class CurrencyConversionController {
@@ -30,6 +32,7 @@ public class CurrencyConversionController {
     
     //localhost:8100/currency-conversion/from/EUR/to/RSD/quantity/100 - request example
 	@GetMapping("/currency-conversion/from/{from}/to/{to}/quantity/{quantity}") //uri params
+    @RateLimiter(name = "default")
     public CurrencyConversion getConversion(@PathVariable String from, @PathVariable String to, @PathVariable double quantity) {
         
         HashMap<String, String> uriVariables = new HashMap<String, String>();
@@ -83,7 +86,8 @@ public class CurrencyConversionController {
 	}
 
     //localhost:8100/currency-conversion-feign?from=EUR&to=RSD&quantity=50
-	@GetMapping("/currency-conversion-feign")
+    @RateLimiter(name = "default")
+    @GetMapping("/currency-conversion-feign")
     public ResponseEntity<?> getConversionFeign(@RequestParam String from, @RequestParam String to, @RequestParam double quantity) {
         try {
              ResponseEntity<CurrencyConversion> response = proxy.getExchange(from, to);
@@ -111,4 +115,9 @@ public class CurrencyConversionController {
 	    String parameter = ex.getParameterName();
 	    return ResponseEntity.status(ex.getStatusCode()).body("Value [" + ex.getParameterType() + "] of parameter [" + parameter + "] has been ommited");
 	}
+
+    @ExceptionHandler(RequestNotPermitted.class)
+    public ResponseEntity<String> rateLimiterExceptionHandler(RequestNotPermitted ex) {
+        return ResponseEntity.status(503).body("Currency exchange service can only serve up to 2 requests every 30 seconds");
+    }
 }
