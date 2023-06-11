@@ -40,6 +40,6 @@ public class CurrencyExchangeController {
 
     @ExceptionHandler(RequestNotPermitted.class)
     public ResponseEntity<String> rateLimiterExceptionHandler(RequestNotPermitted ex) {
-        return ResponseEntity.status(503).body("Currency exchange service can only serve up to 2 requests every 30 seconds");
+        return ResponseEntity.status(503).body("Currency exchange service can only serve up to 2 requests every 45 seconds");
     }
 }

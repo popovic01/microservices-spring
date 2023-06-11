@@ -29,31 +29,13 @@ public class CurrencyConversionController {
 
     @Autowired
 	private CurrencyExchangeProxy proxy;
-    
-    //localhost:8100/currency-conversion/from/EUR/to/RSD/quantity/100 - request example
-	@GetMapping("/currency-conversion/from/{from}/to/{to}/quantity/{quantity}") //uri params
-    @RateLimiter(name = "default")
-    public CurrencyConversion getConversion(@PathVariable String from, @PathVariable String to, @PathVariable double quantity) {
-        
-        HashMap<String, String> uriVariables = new HashMap<String, String>();
-        uriVariables.put("from", from);
-        uriVariables.put("to", to);
-
-        //send request to currency-exchange microservice
-        ResponseEntity<CurrencyConversion> response = 
-            new RestTemplate()
-            .getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}", CurrencyConversion.class, uriVariables);
-
-        CurrencyConversion cc = response.getBody();
-
-        return new CurrencyConversion(from, to, cc.getToValue(),
-         cc.getEnvironment(), quantity, cc.getToValue().multiply(BigDecimal.valueOf(quantity)));
-    }
 
     //localhost:8100/currency-conversion?from=EUR&to=RSD&quantity=50 - request example
 	@GetMapping("/currency-conversion") //query params
-	public ResponseEntity<?> getConversionParams
-        (@RequestParam String from, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity, @RequestHeader("Authorization") String authorization) {
+    @RateLimiter(name = "default")
+    public ResponseEntity<?> getConversionParams
+        (@RequestParam String from, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity, 
+        @RequestHeader("Authorization") String authorization) {
 
 		HashMap<String,String> uriVariables = new HashMap<String,String>(); //we need this for sending request to currency-exchange microservice
 		uriVariables.put("from", from);
@@ -118,6 +100,6 @@ public class CurrencyConversionController {
 
     @ExceptionHandler(RequestNotPermitted.class)
     public ResponseEntity<String> rateLimiterExceptionHandler(RequestNotPermitted ex) {
-        return ResponseEntity.status(503).body("Currency exchange service can only serve up to 2 requests every 30 seconds");
+        return ResponseEntity.status(503).body("Currency conversion service can only serve up to 2 requests every 45 seconds");
     }
 }

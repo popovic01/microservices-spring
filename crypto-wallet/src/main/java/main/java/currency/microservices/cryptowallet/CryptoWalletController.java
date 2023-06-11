@@ -97,7 +97,7 @@ public class CryptoWalletController {
 
         CryptoWallet walletDb = repo.findByEmail(wallet.getEmail());
 
-        switch (wallet.getFrom()) {
+        switch (wallet.getFrom().toLowerCase()) {
             case "btc": {
                 if (repo.findByEmail(wallet.getEmail()).getBtc().compareTo(wallet.getFromValue()) == -1)
 		            return ResponseEntity.status(400).body("You don't have enough " + wallet.getFrom() + " for the exchange");
@@ -132,7 +132,7 @@ public class CryptoWalletController {
             }
         }
 
-        switch (wallet.getTo()) {
+        switch (wallet.getTo().toLowerCase()) {
             case "btc": {
                 walletDb.setBtc(repo.findByEmail(wallet.getEmail()).getBtc().add(wallet.getToValue()));
                 break;

@@ -23,7 +23,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 @RestController
 public class CryptoConversionController {
 
-    //localhost:8100/crypto-conversion?from=EUR&to=RSD&quantity=50 - request example
+    //localhost:8100/crypto-conversion?from=BTC&to=ETH&quantity=50 - request example
 	@GetMapping("/crypto-conversion") //query params
     @RateLimiter(name = "default")
     public ResponseEntity<?> getConversionParams
@@ -72,7 +72,7 @@ public class CryptoConversionController {
 
     @ExceptionHandler(RequestNotPermitted.class)
     public ResponseEntity<String> rateLimiterExceptionHandler(RequestNotPermitted ex) {
-        return ResponseEntity.status(503).body("Currency exchange service can only serve up to 2 requests every 30 seconds");
+        return ResponseEntity.status(503).body("Crypto conversion service can only serve up to 2 requests every 45 seconds");
     }
     
 }

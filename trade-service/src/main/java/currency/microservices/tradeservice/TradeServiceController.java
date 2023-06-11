@@ -1,5 +1,6 @@
 package currency.microservices.tradeservice;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -8,9 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -27,9 +28,13 @@ public class TradeServiceController {
     @Autowired //dependency injection
     private TradeServiceRepository repo;
     
-    @PostMapping("/trade-service")
+    //localhost:8600/trade-service?from=BTC&to=EUR&quantity=0.5 - request example
+    @GetMapping("/trade-service")
     @RateLimiter(name = "default")
-    public ResponseEntity<?> getExchange(@RequestBody TradeServiceDto request, @RequestHeader("Authorization") String authorization) {
+    public ResponseEntity<?> getExchange(@RequestParam String from, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity, 
+        @RequestHeader("Authorization") String authorization) {
+
+        TradeServiceDto request = new TradeServiceDto("", from, "", to, BigDecimal.valueOf(0), BigDecimal.valueOf(quantity));
 
         request.setFromActual(request.getFrom());        
         request.setToActual(request.getTo());
@@ -99,7 +104,7 @@ public class TradeServiceController {
     {
         // call bank account service, check if there is enough money and update bank account
         WalletAccountDto requestDto = new WalletAccountDto(email, request.getFromActual(), request.getTo(), request.getQuantityActual(), 
-            repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantity()));
+            repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantityActual()));
 
         // call crypto wallet service, check if there is enough money and update wallet  
         new RestTemplate().
@@ -117,7 +122,7 @@ public class TradeServiceController {
     private ResponseEntity<?> cryptoToFiat(TradeServiceDto request, String email)
     {
         WalletAccountDto requestDto = new WalletAccountDto(email, request.getFrom(), request.getToActual(), request.getQuantityActual(), 
-            repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantity()));
+            repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantityActual()));
 
         // call crypto wallet service, check if there is enough money and update wallet  
         new RestTemplate().
@@ -144,6 +149,6 @@ public class TradeServiceController {
 
     @ExceptionHandler(RequestNotPermitted.class)
     public ResponseEntity<String> rateLimiterExceptionHandler(RequestNotPermitted ex) {
-        return ResponseEntity.status(503).body("Currency exchange service can only serve up to 2 requests every 30 seconds");
+        return ResponseEntity.status(503).body("Trade service can only serve up to 2 requests every 45 seconds");
     }
 }
