@@ -29,6 +29,11 @@ public class CryptoWalletController {
 		return repo.findAll();
 	}
 
+    @GetMapping("/crypto-wallet/{email}")
+	public Boolean getByEmail(@PathVariable("email") String email){
+		return repo.existsByEmail(email);
+	}
+
     @PostMapping("/crypto-wallet")
     public ResponseEntity<?> addCryptoWallet(@RequestBody CryptoWallet wallet) {
 
@@ -48,7 +53,7 @@ public class CryptoWalletController {
             repo.save(wallet);
 		    return ResponseEntity.status(201).body(wallet);
         } else {
-		    return ResponseEntity.status(400).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
+		    return ResponseEntity.status(404).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
         }
     }
 
@@ -72,7 +77,7 @@ public class CryptoWalletController {
                 repo.save(wallet);
                 return ResponseEntity.status(200).body(wallet);
             } else {
-                return ResponseEntity.status(400).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
+                return ResponseEntity.status(404).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
             }
         } else {
 		    return new ResponseEntity<CryptoWallet>(HttpStatus.NO_CONTENT);
@@ -93,7 +98,7 @@ public class CryptoWalletController {
     public ResponseEntity<?> conversion(@RequestBody CryptoWalletDto wallet) {
 
         if (!repo.existsByEmail(wallet.getEmail()))
-		    return ResponseEntity.status(400).body("Crypto wallet with email " + wallet.getEmail() + " doesn't exist");
+		    return ResponseEntity.status(404).body("Crypto wallet with email " + wallet.getEmail() + " doesn't exist");
 
         CryptoWallet walletDb = repo.findByEmail(wallet.getEmail());
 

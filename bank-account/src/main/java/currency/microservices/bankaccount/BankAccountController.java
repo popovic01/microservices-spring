@@ -49,7 +49,7 @@ public class BankAccountController {
             repo.save(account);
 		    return ResponseEntity.status(201).body(account);
         } else {
-		    return ResponseEntity.status(400).body("User with email " + account.getEmail() + " doesn't exist");
+		    return ResponseEntity.status(404).body("User with email " + account.getEmail() + " doesn't exist");
         }
     }
 
@@ -57,7 +57,7 @@ public class BankAccountController {
     public ResponseEntity<?> conversion(@RequestBody BankAccountDto account) {
 
         if (!repo.existsByEmail(account.getEmail()))
-		    return ResponseEntity.status(400).body("Bank account with email " + account.getEmail() + " doesn't exist");
+		    return ResponseEntity.status(404).body("Bank account with email " + account.getEmail() + " doesn't exist");
 
         BankAccount accountDb = repo.findByEmail(account.getEmail());
 
@@ -157,7 +157,7 @@ public class BankAccountController {
                 repo.save(account);
                 return ResponseEntity.status(200).body(account);
             } else {
-                return ResponseEntity.status(400).body("User with email " + account.getEmail() + " doesn't exist");
+                return ResponseEntity.status(404).body("User with email " + account.getEmail() + " doesn't exist");
             }
         } else {
 		    return new ResponseEntity<BankAccount>(HttpStatus.NO_CONTENT);

@@ -1,47 +1,47 @@
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(1,'btc','usd',25806);
+values(1,'BTC','USD',25806);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(2,'usd','btc',0.000039);
+values(2,'USD','BTC',0.000039);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(3,'btc','eur',23972);
+values(3,'BTC','EUR',23972);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(4,'eur','btc',0.000042);
+values(4,'EUR','BTC',0.000042);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(5,'bnb','usd',237);
+values(5,'BNB','USD',237);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(6,'usd','bnb',0.0042);
+values(6,'USD','BNB',0.0042);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(7,'bnb','eur',220);
+values(7,'BNB','EUR',220);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(8,'eur','bnb',0.0045);
+values(8,'EUR','BNB',0.0045);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(9,'eth','usd',1757);
+values(9,'ETH','USD',1757);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(10,'usd','eth',0.00057);
+values(10,'USD','ETH',0.00057);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(11,'eth','eur',1632);
+values(11,'ETH','EUR',1632);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(12,'eur','eth',0.00061);
+values(12,'EUR','ETH',0.00061);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(13,'ada','usd',0.27);
+values(13,'ada','USD',0.27);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(14,'usd','ada',3.76);
+values(14,'USD','ada',3.76);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(15,'ada','eur',0.25);
+values(15,'ada','EUR',0.25);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(16,'eur','ada',4.04);
+values(16,'EUR','ada',4.04);

@@ -27,7 +27,6 @@ public class ApiGatewayConfiguration {
 				// 		.filters(f -> f.rewritePath("/currency-conversion", "/currency-conversion-feign")) //rerouting
 				// 		.uri("lb://currency-conversion"))
                 .route(p -> p.path("/users-service/**").uri("lb://users-service"))                
-				.route(p -> p.path("/trade-service/**").uri("lb://trade-service"))
 				.build();
 	}
 

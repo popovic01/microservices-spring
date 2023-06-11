@@ -63,7 +63,7 @@ public class TradeServiceController {
             || request.getTo().toUpperCase().equals("CHF") 
             || request.getTo().toUpperCase().equals("RSD")) {
 
-            kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), "eur"); 
+            kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toUpperCase(), "EUR"); 
 
             // convert to eur and then to fiat
             uriVariables.put("from", "EUR");
