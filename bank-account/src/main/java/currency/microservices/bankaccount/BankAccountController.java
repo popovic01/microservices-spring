@@ -172,7 +172,7 @@ public class BankAccountController {
 
 			HashMap<String, String> uriVariables = new HashMap<String, String>();
             uriVariables.put("email", email);
-			new RestTemplate().delete("http://localhost:8300/crypto-wallet/{email}", uriVariables);
+			new RestTemplate().delete("http://localhost:8900/crypto-wallet/{email}", uriVariables);
 
 			return new ResponseEntity<BankAccount>(HttpStatus.OK);
 		}

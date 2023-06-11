@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import main.java.currency.microservices.cryptowallet.dtos.CryptoWalletDto;
+import main.java.currency.microservices.cryptowallet.dtos.CryptoWalletResponseDto;
+
 @RestController
 public class CryptoWalletController {
     
@@ -84,6 +87,78 @@ public class CryptoWalletController {
 			return new ResponseEntity<CryptoWallet>(HttpStatus.OK);
 		}
 		return new ResponseEntity<CryptoWallet>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/crypto-wallet/conversion")
+    public ResponseEntity<?> conversion(@RequestBody CryptoWalletDto wallet) {
+
+        if (!repo.existsByEmail(wallet.getEmail()))
+		    return ResponseEntity.status(400).body("Crypto wallet with email " + wallet.getEmail() + " doesn't exist");
+
+        CryptoWallet walletDb = repo.findByEmail(wallet.getEmail());
+
+        switch (wallet.getFrom()) {
+            case "btc": {
+                if (repo.findByEmail(wallet.getEmail()).getBtc().compareTo(wallet.getFromValue()) == -1)
+		            return ResponseEntity.status(400).body("You don't have enough " + wallet.getFrom() + " for the exchange");
+                else {
+                    walletDb.setBtc(repo.findByEmail(wallet.getEmail()).getBtc().subtract(wallet.getFromValue()));
+                }
+                break;
+            }
+            case "eth": {
+                if (repo.findByEmail(wallet.getEmail()).getEth().compareTo(wallet.getFromValue()) == -1)
+		            return ResponseEntity.status(400).body("You don't have enough " + wallet.getFrom() + " for the exchange");
+                else {
+                    walletDb.setEth(repo.findByEmail(wallet.getEmail()).getEth().subtract(wallet.getFromValue()));
+                }
+                break;
+            }
+            case "bnb": {
+                if (repo.findByEmail(wallet.getEmail()).getBnb().compareTo(wallet.getFromValue()) == -1)
+		            return ResponseEntity.status(400).body("You don't have enough " + wallet.getFrom() + " for the exchange");
+                else {
+                    walletDb.setBnb(repo.findByEmail(wallet.getEmail()).getBnb().subtract(wallet.getFromValue()));
+                }
+                break;
+            }
+            case "ada": {
+                if (repo.findByEmail(wallet.getEmail()).getAda().compareTo(wallet.getFromValue()) == -1)
+		            return ResponseEntity.status(400).body("You don't have enough " + wallet.getFrom() + " for the exchange");
+                else {
+                    walletDb.setAda(repo.findByEmail(wallet.getEmail()).getAda().subtract(wallet.getFromValue()));
+                }
+                break;
+            }
+        }
+
+        switch (wallet.getTo()) {
+            case "btc": {
+                walletDb.setBtc(repo.findByEmail(wallet.getEmail()).getBtc().add(wallet.getToValue()));
+                break;
+            }
+            case "eth": {
+                walletDb.setEth(repo.findByEmail(wallet.getEmail()).getEth().add(wallet.getToValue()));
+                break;
+            }
+            case "bnb": {
+                walletDb.setBnb(repo.findByEmail(wallet.getEmail()).getBnb().add(wallet.getToValue()));
+                break;
+            }
+            case "ada": {
+                walletDb.setAda(repo.findByEmail(wallet.getEmail()).getAda().add(wallet.getToValue()));
+                break;
+            }
+        }
+
+        repo.save(walletDb);
+
+        CryptoWalletResponseDto responseDto = new CryptoWalletResponseDto(
+            walletDb.getEmail(), 
+            walletDb.getBtc(), walletDb.getEth(), walletDb.getBnb(), walletDb.getAda(),
+            "Successfully exchanged " + wallet.getFromValue() + wallet.getFrom() + " to " + wallet.getTo());
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 
 }
