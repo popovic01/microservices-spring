@@ -1,7 +1,6 @@
 package currency.microservices.currencyconversion;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
 
 import currency.microservices.currencyconversion.dtos.BankAccountDto;
 import feign.FeignException;

@@ -18,8 +18,6 @@ import org.springframework.web.client.RestTemplate;
 import currency.microservices.tradeservice.dtos.WalletAccountDto;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import currency.microservices.tradeservice.dtos.BankAccountResponseDto;
-import currency.microservices.tradeservice.dtos.CryptoWalletResponseDto;
 import currency.microservices.tradeservice.dtos.TradeServiceDto;
 
 @RestController
@@ -49,7 +47,6 @@ public class TradeServiceController {
         request.setToActual(request.getTo());
         request.setQuantityActual(request.getQuantity());
 
-        HashMap<String, String> uriVariables = new HashMap<String, String>();
         TradeService kurs;
 
         if (request.getFrom().toUpperCase().equals("GBP") 
@@ -98,7 +95,7 @@ public class TradeServiceController {
                 return ResponseEntity.status(200).body(fiatToCrypto(request, email).getBody());
             }
         } 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Requested exchange could not be found!");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Requested exchange could not be found");
     }
 
     private ResponseEntity<?> fiatToCrypto(TradeServiceDto request, String email)

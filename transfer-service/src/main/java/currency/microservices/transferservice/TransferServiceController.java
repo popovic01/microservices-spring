@@ -86,7 +86,7 @@ public class TransferServiceController {
 		return email;
 	}
 
-    //handles error if there is missing parameter
+    // handles error if there is missing parameter
     @ExceptionHandler(MissingServletRequestParameterException.class)
 	public ResponseEntity<String> handleMissingParams(MissingServletRequestParameterException ex) {
 	    String parameter = ex.getParameterName();

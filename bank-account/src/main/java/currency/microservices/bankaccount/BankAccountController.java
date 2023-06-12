@@ -152,21 +152,21 @@ public class BankAccountController {
                 return ResponseEntity.status(404).body("User with email " + account.getEmail() + " doesn't exist");
             }
         } else {
-		    return new ResponseEntity<BankAccount>(HttpStatus.NO_CONTENT);
+		    return ResponseEntity.status(HttpStatus.NO_CONTENT).body("User with id " + account.getId() + " doesn't exist");
         }
     }
 
-    @DeleteMapping("/bank-account/{email}")
-    public ResponseEntity<?> deleteBankAccount(@PathVariable("email") String email) {
-		if (repo.existsByEmail(email)) {
-            BankAccount account = repo.findByEmail(email);
+    @DeleteMapping("/bank-account/{id}")
+    public ResponseEntity<?> deleteBankAccount(@PathVariable("id") Long id) {
+		if (repo.findById(id) != null) {
+            BankAccount account = repo.findById(id).get();
 			repo.delete(account);
 
-            cryptoWalletProxy.deleteWallet(email);
+            cryptoWalletProxy.deleteWallet(account.getEmail());
 
-			return new ResponseEntity<BankAccount>(HttpStatus.OK);
+			return ResponseEntity.status(HttpStatus.OK).body("Bank account successfully deleted");
 		}
-		return new ResponseEntity<BankAccount>(HttpStatus.NO_CONTENT);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Bank account with id " + id + " doesn't exist");
     }
     
 	@GetMapping("/bank-account/{email}")

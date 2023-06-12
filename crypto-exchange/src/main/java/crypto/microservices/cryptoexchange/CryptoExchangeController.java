@@ -21,7 +21,7 @@ public class CryptoExchangeController {
         if (kurs != null) {
             return ResponseEntity.ok(kurs);
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Requested crypto exchange could not be found!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Requested crypto exchange could not be found");
         }
         
     }

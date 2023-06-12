@@ -69,13 +69,13 @@ public class UserController {
 				return ResponseEntity.status(409).body("Already exists user with OWNER role");
 			}
 			repo.save(user);
-			return new ResponseEntity<CustomUser>(HttpStatus.OK);
+			return ResponseEntity.status(HttpStatus.OK).body(user);
 		}
-		return new ResponseEntity<CustomUser>(HttpStatus.NO_CONTENT);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).body("User with id " + user.getId() + "doesn't exist");
 	}
 
 	@DeleteMapping("/users-service/users/{id}")
-	public ResponseEntity<CustomUser> deleteUser(@PathVariable("id") Long id) {
+	public ResponseEntity<?> deleteUser(@PathVariable("id") Long id) {
 		if (repo.existsById(id)) {
 			String email = repo.findById(id).get().getEmail();
 			repo.deleteById(id);
@@ -86,9 +86,9 @@ public class UserController {
 			// deleting connected bank account and wallet
 			bankAccountProxy.deleteBankAccount(email);
 			cryptoWalletProxy.deleteWallet(email);
-			return new ResponseEntity<CustomUser>(HttpStatus.OK);
+			return ResponseEntity.status(HttpStatus.OK).body("Successfully deleted user");
 		}
-		return new ResponseEntity<CustomUser>(HttpStatus.NO_CONTENT);
+		return ResponseEntity.status(HttpStatus.NO_CONTENT).body("User with id " + id + "doesn't exist");
 	}
 
 	private String getEmail(String authorization) {

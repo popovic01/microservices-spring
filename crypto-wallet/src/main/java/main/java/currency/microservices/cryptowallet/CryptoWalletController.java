@@ -70,7 +70,7 @@ public class CryptoWalletController {
                 return ResponseEntity.status(404).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
             }
         } else {
-		    return new ResponseEntity<CryptoWallet>(HttpStatus.NO_CONTENT);
+		    return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Crypto wallet with id " + wallet.getId() + "doesn't exist");
         }
     }
 
@@ -79,16 +79,16 @@ public class CryptoWalletController {
 		if (repo.existsByEmail(email)) {
             CryptoWallet wallet = repo.findByEmail(email);
 			repo.delete(wallet);
-			return new ResponseEntity<CryptoWallet>(HttpStatus.OK);
+			return ResponseEntity.status(HttpStatus.OK).body("Crypto wallet successfully deleted");
 		}
-		return new ResponseEntity<CryptoWallet>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Crypto wallet connected with email " + email + "doesn't exist");
     }
 
     @PostMapping("/crypto-wallet/conversion")
     public ResponseEntity<?> conversion(@RequestBody CryptoWalletDto wallet) {
 
         if (!repo.existsByEmail(wallet.getEmail()))
-		    return ResponseEntity.status(404).body("Crypto wallet with email " + wallet.getEmail() + " doesn't exist");
+		    return ResponseEntity.status(404).body("Crypto wallet connected with email " + wallet.getEmail() + " doesn't exist");
 
         CryptoWallet walletDb = repo.findByEmail(wallet.getEmail());
 
