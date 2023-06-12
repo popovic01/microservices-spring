@@ -27,6 +27,15 @@ public class TradeServiceController {
     
     @Autowired //dependency injection
     private TradeServiceRepository repo;
+
+    @Autowired
+    private BankAccountProxy bankAccountProxy;
+
+    @Autowired
+    private CryptoWalletProxy cryptoWalletProxy;
+
+    @Autowired
+    private CurrencyExchangeProxy currencyExchangeProxy;
     
     //localhost:8600/trade-service?from=BTC&to=EUR&quantity=0.5 - request example
     @GetMapping("/trade-service")
@@ -48,13 +57,9 @@ public class TradeServiceController {
             || request.getFrom().toUpperCase().equals("RSD")) {
             
             // convert to eur and then to crypto
-            uriVariables.put("from", request.getFrom().toUpperCase());
-            uriVariables.put("to", "EUR");
 
             // send request to currency-exchange microservice
-            ResponseEntity<WalletAccountDto> response = 
-                new RestTemplate()
-                .getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}", WalletAccountDto.class, uriVariables);   
+            ResponseEntity<WalletAccountDto> response = currencyExchangeProxy.getExchange(request.getFrom().toUpperCase(), "EUR"); 
                 
             request.setFrom(response.getBody().getTo());
             request.setQuantity(response.getBody().getToValue().multiply(request.getQuantity()));
@@ -66,13 +71,9 @@ public class TradeServiceController {
             kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toUpperCase(), "EUR"); 
 
             // convert to eur and then to fiat
-            uriVariables.put("from", "EUR");
-            uriVariables.put("to", request.getTo());
 
             // send request to currency-exchange microservice
-            ResponseEntity<WalletAccountDto> response = 
-                new RestTemplate()
-                .getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}", WalletAccountDto.class, uriVariables);   
+            ResponseEntity<WalletAccountDto> response = currencyExchangeProxy.getExchange("EUR", request.getTo());
                 
             request.setTo(response.getBody().getFrom());
             request.setQuantity(response.getBody().getToValue().multiply(kurs.getToValue()));
@@ -107,15 +108,10 @@ public class TradeServiceController {
             repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantityActual()));
 
         // call crypto wallet service, check if there is enough money and update wallet  
-        new RestTemplate().
-            postForEntity("http://localhost:8405/bank-account/conversion", 
-            requestDto, BankAccountResponseDto.class);   
+        bankAccountProxy.conversion(requestDto);
                             
-        ResponseEntity<CryptoWalletResponseDto> responseWallet = 
-            new RestTemplate().
-            postForEntity("http://localhost:8900/crypto-wallet/conversion", 
-                requestDto, CryptoWalletResponseDto.class);  
-
+        ResponseEntity<?> responseWallet = cryptoWalletProxy.conversion(requestDto);
+ 
         return responseWallet;
     }
 
@@ -125,14 +121,9 @@ public class TradeServiceController {
             repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantityActual()));
 
         // call crypto wallet service, check if there is enough money and update wallet  
-        new RestTemplate().
-            postForEntity("http://localhost:8900/crypto-wallet/conversion", 
-            requestDto, CryptoWalletResponseDto.class);   
+    cryptoWalletProxy.conversion(requestDto);
                             
-        ResponseEntity<BankAccountResponseDto> responseAccount = 
-            new RestTemplate().
-                postForEntity("http://localhost:8405/bank-account/conversion", 
-                requestDto, BankAccountResponseDto.class);   
+        ResponseEntity<?> responseAccount = bankAccountProxy.conversion(requestDto);  
 
         return responseAccount;
     }

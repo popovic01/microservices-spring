@@ -13,7 +13,6 @@ public class ApiGatewayConfiguration {
 
 		return builder
 				.routes()
-				.route(p -> p.path("/@Depaiva1997").uri("http://youtube.com"))
 				.route(p -> p.path("/currency-exchange/**").uri("lb://currency-exchange"))
 				.route(p -> p.path("/bank-account/**").uri("lb://bank-account"))
 				.route(p -> p.path("/crypto-wallet/**").uri("lb://crypto-wallet"))

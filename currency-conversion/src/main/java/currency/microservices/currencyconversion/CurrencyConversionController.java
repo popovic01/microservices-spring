@@ -15,10 +15,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import currency.microservices.currencyconversion.dtos.BankAccountDto;
-import currency.microservices.currencyconversion.dtos.BankAccountResponseDto;
 import feign.FeignException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -29,56 +27,34 @@ public class CurrencyConversionController {
     @Autowired
 	private CurrencyExchangeProxy proxy;
 
+    @Autowired
+    private BankAccountProxy bankAccountProxy;
+
     //localhost:8100/currency-conversion?from=EUR&to=RSD&quantity=50 - request example
-	@GetMapping("/currency-conversion") //query params
+	@GetMapping("/currency-conversion") 
     @RateLimiter(name = "default")
     public ResponseEntity<?> getConversionParams
         (@RequestParam String from, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity, 
         @RequestHeader("Authorization") String authorization) {
 
-		HashMap<String,String> uriVariables = new HashMap<String,String>(); //we need this for sending request to currency-exchange microservice
-		uriVariables.put("from", from);
-		uriVariables.put("to", to);
-
 		String email = getEmail(authorization);
 
         try {
-            // without feign
-            ResponseEntity<CurrencyConversion> response = 
-                new RestTemplate().
-                getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}",
-                    CurrencyConversion.class, uriVariables);
+            ResponseEntity<CurrencyConversion> response = proxy.getExchange(from, to);
 
-            CurrencyConversion responseBody = response.getBody(); //the response contains ToValue and Environment
+            CurrencyConversion responseBody = response.getBody(); // the response contains ToValue and Environment
 
             // request to bank account service
             BankAccountDto accountDto = new BankAccountDto(email, from, to, BigDecimal.valueOf(quantity), 
                 responseBody.getToValue().multiply(BigDecimal.valueOf(quantity)));
 
-            ResponseEntity<BankAccountResponseDto> responseBank = 
-                new RestTemplate().
-                postForEntity("http://localhost:8405/bank-account/conversion", 
-                    accountDto, BankAccountResponseDto.class);
+            ResponseEntity<?> responseBank = bankAccountProxy.conversion(accountDto);
 
             return ResponseEntity.status(HttpStatus.OK).body(responseBank.getBody());
-        } catch (HttpClientErrorException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getMessage());
-        }
-	}
-
-    //localhost:8100/currency-conversion-feign?from=EUR&to=RSD&quantity=50
-    @RateLimiter(name = "default")
-    @GetMapping("/currency-conversion-feign")
-    public ResponseEntity<?> getConversionFeign(@RequestParam String from, @RequestParam String to, @RequestParam double quantity) {
-        try {
-             ResponseEntity<CurrencyConversion> response = proxy.getExchange(from, to);
-             CurrencyConversion responseBody = response.getBody();
-             return ResponseEntity.ok(new CurrencyConversion(from, to, responseBody.getToValue(), responseBody.getEnvironment() + " feign",
-                quantity, responseBody.getToValue().multiply(BigDecimal.valueOf(quantity))));
         } catch (FeignException e) {
             return ResponseEntity.status(e.status()).body(e.getMessage());
         }
-    }
+	}
 
     private String getEmail(String authorization) {
 		// Extract the username and password from the Authorization header

@@ -24,6 +24,12 @@ public class UserController {
     @Autowired
 	private CustomUserRepository repo;
 
+	@Autowired
+	private BankAccountProxy bankAccountProxy;
+
+	@Autowired
+	private CryptoWalletProxy cryptoWalletProxy;
+
 	@GetMapping("/users-service/users")
 	public List<CustomUser> getAllUsers(){
 		return repo.findAll();
@@ -77,9 +83,9 @@ public class UserController {
 			HashMap<String, String> uriVariables = new HashMap<String, String>();
             uriVariables.put("email", email);
 			
-			// deleting connected bank account
-			new RestTemplate().delete("http://localhost:8405/bank-account/{email}", uriVariables);
-			new RestTemplate().delete("http://localhost:8900/crypto-wallet/{email}", uriVariables);
+			// deleting connected bank account and wallet
+			bankAccountProxy.deleteBankAccount(email);
+			cryptoWalletProxy.deleteWallet(email);
 			return new ResponseEntity<CustomUser>(HttpStatus.OK);
 		}
 		return new ResponseEntity<CustomUser>(HttpStatus.NO_CONTENT);

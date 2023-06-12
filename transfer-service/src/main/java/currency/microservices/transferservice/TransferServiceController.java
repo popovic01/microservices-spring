@@ -2,8 +2,8 @@ package currency.microservices.transferservice;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import currency.microservices.transferservice.dtos.TransferServiceDto;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
@@ -20,6 +19,11 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 @RestController
 public class TransferServiceController {
     
+    @Autowired
+    private BankAccountProxy bankAccountProxy;
+
+    @Autowired
+    private CryptoWalletProxy cryptoWalletProxy;
     
     //localhost:8700/transfer-service?currency=EUR&to=abcd@gmail.com&quantity=50 - request example
 	@GetMapping("/transfer-service") //query params
@@ -31,10 +35,7 @@ public class TransferServiceController {
 		String email = getEmail(authorization);
         TransferServiceDto requestDto = new TransferServiceDto(email, to, currency, quantity + quantity * 0.01, quantity);
 
-        HashMap<String, String> uriVariable = new HashMap<String, String>();
-        uriVariable.put("email", to);
-
-        Boolean toEmailExists = new RestTemplate().getForEntity("http://localhost:8900/crypto-wallet/{email}", Boolean.class, uriVariable).getBody();
+        Boolean toEmailExists = cryptoWalletProxy.getByEmail(email);
 
         if (currency.equals("EUR") || currency.equals("USD") || currency.equals("GBP") 
             || currency.equals("CHF") || currency.equals("RSD")) {
@@ -43,18 +44,14 @@ public class TransferServiceController {
 		        return ResponseEntity.status(404).body("Bank account with email " + to + " doesn't exist");
 
             // subtract from the account
-            new RestTemplate(). 
-                postForEntity("http://localhost:8405/bank-account/conversion", 
-                requestDto, TransferServiceDto.class);   
+            bankAccountProxy.conversion(requestDto);
 
             requestDto.setEmail(to);
             requestDto.setTo(currency);
             requestDto.setToValue(quantity);
             requestDto.setFrom("");
             // add to the account
-            new RestTemplate(). 
-                postForEntity("http://localhost:8405/bank-account/conversion", 
-                requestDto, TransferServiceDto.class); 
+            bankAccountProxy.conversion(requestDto);
 
         } else if (currency.equals("BTC") || currency.equals("ETH") 
             || currency.equals("ADA") || currency.equals("BNB")) {
@@ -63,18 +60,14 @@ public class TransferServiceController {
 		        return ResponseEntity.status(404).body("Crypto wallet with email " + to + " doesn't exist");
 
             // subtract from the account
-            new RestTemplate().
-                postForEntity("http://localhost:8900/crypto-wallet/conversion", 
-                requestDto, TransferServiceDto.class);  
+            cryptoWalletProxy.conversion(requestDto);  
 
             requestDto.setEmail(to);
             requestDto.setTo(currency);
             requestDto.setToValue(quantity);
             requestDto.setFrom("");
             // add to the account
-            new RestTemplate(). 
-                postForEntity("http://localhost:8900/crypto-wallet/conversion", 
-                requestDto, TransferServiceDto.class); 
+            cryptoWalletProxy.conversion(requestDto);  
 
         } else {
             return ResponseEntity.status(400).body("Currency " + currency + " doesn't exist");

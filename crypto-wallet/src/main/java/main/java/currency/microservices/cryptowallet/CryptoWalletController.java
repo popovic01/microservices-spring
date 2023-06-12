@@ -1,6 +1,5 @@
 package main.java.currency.microservices.cryptowallet;
 
-import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import main.java.currency.microservices.cryptowallet.dtos.CryptoWalletDto;
 import main.java.currency.microservices.cryptowallet.dtos.CryptoWalletResponseDto;
@@ -23,6 +21,9 @@ public class CryptoWalletController {
     
     @Autowired //dependency injection
     private CryptoWalletRepository repo;
+
+    @Autowired
+    private BankAccountProxy bankAccountProxy;
     
     @GetMapping("/crypto-wallet/wallets")
 	public List<CryptoWallet> getAllWallets(){
@@ -30,20 +31,14 @@ public class CryptoWalletController {
 	}
 
     @GetMapping("/crypto-wallet/{email}")
-	public Boolean getByEmail(@PathVariable("email") String email){
+	public Boolean getByEmail(@PathVariable("email") String email) {
 		return repo.existsByEmail(email);
 	}
 
     @PostMapping("/crypto-wallet")
     public ResponseEntity<?> addCryptoWallet(@RequestBody CryptoWallet wallet) {
-
-        HashMap<String, String> uriVariables = new HashMap<String, String>();
-        uriVariables.put("email", wallet.getEmail());
-
         // send request to users microservice
-        ResponseEntity<Boolean> response = 
-            new RestTemplate()
-            .getForEntity("http://localhost:8405/bank-account/{email}", Boolean.class, uriVariables);
+        ResponseEntity<Boolean> response = bankAccountProxy.existsByEmail(wallet.getEmail());
 
         // account with email exists
         if (response.getBody()) {
@@ -61,13 +56,8 @@ public class CryptoWalletController {
     public ResponseEntity<?> editCryptoWallet(@RequestBody CryptoWallet wallet) {
 
 		if (repo.existsById(wallet.getId())) {
-            HashMap<String, String> uriVariables = new HashMap<String, String>();
-            uriVariables.put("email", wallet.getEmail());
-    
             // send request to users microservice
-            ResponseEntity<Boolean> response = 
-                new RestTemplate()
-                .getForEntity("http://localhost:8405/bank-account/{email}", Boolean.class, uriVariables);
+            ResponseEntity<Boolean> response = bankAccountProxy.existsByEmail(wallet.getEmail());
     
             // account with email exists
             if (response.getBody()) {
