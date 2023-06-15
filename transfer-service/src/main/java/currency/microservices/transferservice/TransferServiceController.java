@@ -28,7 +28,7 @@ public class TransferServiceController {
     
     //localhost:8700/transfer-service?currency=EUR&to=abcd@gmail.com&quantity=50 - request example
 	@GetMapping("/transfer-service") //query params
-    // @RateLimiter(name = "default")
+    @RateLimiter(name = "default")
     public ResponseEntity<?> transfer
         (@RequestParam String currency, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity, 
         @RequestHeader("Authorization") String authorization) {

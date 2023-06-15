@@ -23,7 +23,7 @@ public class CurrencyExchangeController {
     
     //localhost:8000/currency-exchange/from/EUR/to/RSD - request example
     @GetMapping("/currency-exchange/from/{from}/to/{to}")
-    // @RateLimiter(name = "default")
+    @RateLimiter(name = "default")
     public ResponseEntity<?> getExchange(@PathVariable String from, @PathVariable String to) {
 
         String port = environment.getProperty("local.server.port"); //  accessing value of server.port property from application.properties

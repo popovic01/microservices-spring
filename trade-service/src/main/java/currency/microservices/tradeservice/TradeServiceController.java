@@ -36,7 +36,7 @@ public class TradeServiceController {
     
     //localhost:8600/trade-service?from=BTC&to=EUR&quantity=0.5 - request example
     @GetMapping("/trade-service")
-    // @RateLimiter(name = "default")
+    @RateLimiter(name = "default")
     public ResponseEntity<?> getExchange(@RequestParam String from, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity, 
         @RequestHeader("Authorization") String authorization) {
 

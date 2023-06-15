@@ -28,7 +28,7 @@ public class BankAccountController {
     @Autowired
     private CryptoWalletProxy cryptoWalletProxy;
 
-    //localhost:8405/bank-account/accounts - request example
+    //localhost:8200/bank-account/accounts - request example
     @GetMapping("/bank-account/accounts")
 	public List<BankAccount> getAllAccounts(){
 		return repo.findAll();
