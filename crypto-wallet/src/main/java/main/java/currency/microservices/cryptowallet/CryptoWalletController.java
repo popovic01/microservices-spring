@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import feign.FeignException;
 import main.java.currency.microservices.cryptowallet.dtos.CryptoWalletDto;
 import main.java.currency.microservices.cryptowallet.dtos.CryptoWalletResponseDto;
 
@@ -37,40 +38,47 @@ public class CryptoWalletController {
 
     @PostMapping("/crypto-wallet")
     public ResponseEntity<?> addCryptoWallet(@RequestBody CryptoWallet wallet) {
-        // send request to users microservice
-        ResponseEntity<Boolean> response = bankAccountProxy.existsByEmail(wallet.getEmail());
+        try {
+            // send request to users microservice
+            ResponseEntity<Boolean> response = bankAccountProxy.existsByEmail(wallet.getEmail());
 
-        // account with email exists
-        if (response.getBody()) {
-            if (repo.existsByEmail(wallet.getEmail())) {
-		        return ResponseEntity.status(409).body("Crypto wallet connected with email " + wallet.getEmail() + " already exists");
+            // account with email exists
+            if (response.getBody()) {
+                if (repo.existsByEmail(wallet.getEmail())) {
+                    return ResponseEntity.status(409).body("Crypto wallet connected with email " + wallet.getEmail() + " already exists");
+                }
+                repo.save(wallet);
+                return ResponseEntity.status(201).body(wallet);
+            } else {
+                return ResponseEntity.status(404).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
             }
-            repo.save(wallet);
-		    return ResponseEntity.status(201).body(wallet);
-        } else {
-		    return ResponseEntity.status(404).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
         }
     }
 
     @PutMapping("/crypto-wallet")
     public ResponseEntity<?> editCryptoWallet(@RequestBody CryptoWallet wallet) {
-
-		if (repo.existsById(wallet.getId())) {
-            // send request to users microservice
-            ResponseEntity<Boolean> response = bankAccountProxy.existsByEmail(wallet.getEmail());
-    
-            // account with email exists
-            if (response.getBody()) {
-                if (repo.existsByEmail(wallet.getEmail()) && repo.findByEmail(wallet.getEmail()).getId() != repo.findById(wallet.getId()).get().getId()) {
-                    return ResponseEntity.status(409).body("Crypto wallet connected with email " + wallet.getEmail() + " already exists");
+        try {
+            if (repo.existsById(wallet.getId())) {
+                // send request to users microservice
+                ResponseEntity<Boolean> response = bankAccountProxy.existsByEmail(wallet.getEmail());
+        
+                // account with email exists
+                if (response.getBody()) {
+                    if (repo.existsByEmail(wallet.getEmail()) && repo.findByEmail(wallet.getEmail()).getId() != repo.findById(wallet.getId()).get().getId()) {
+                        return ResponseEntity.status(409).body("Crypto wallet connected with email " + wallet.getEmail() + " already exists");
+                    }
+                    repo.save(wallet);
+                    return ResponseEntity.status(200).body(wallet);
+                } else {
+                    return ResponseEntity.status(404).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
                 }
-                repo.save(wallet);
-                return ResponseEntity.status(200).body(wallet);
             } else {
-                return ResponseEntity.status(404).body("Bank account with email " + wallet.getEmail() + " doesn't exist");
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Crypto wallet with id " + wallet.getId() + "doesn't exist");
             }
-        } else {
-		    return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Crypto wallet with id " + wallet.getId() + "doesn't exist");
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
         }
     }
 

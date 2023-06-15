@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import dtos.BankAccountDto;
 import dtos.BankAccountResponseDto;
+import feign.FeignException;
 
 @RestController
 public class BankAccountController {
@@ -35,18 +36,22 @@ public class BankAccountController {
 
     @PostMapping("/bank-account")
     public ResponseEntity<?> addBankAccount(@RequestBody BankAccount account) {
-        // send request to users microservice
-        ResponseEntity<Boolean> response = usersProxy.existsByEmail(account.getEmail());
+        try {
+            // send request to users microservice
+            ResponseEntity<Boolean> response = usersProxy.existsByEmail(account.getEmail());
 
-        // user with email exists
-        if (response.getBody()) {
-            if (repo.existsByEmail(account.getEmail())) {
-		        return ResponseEntity.status(409).body("Bank account connected with email " + account.getEmail() + " already exists");
-            }
-            repo.save(account);
-		    return ResponseEntity.status(201).body(account);
-        } else {
-		    return ResponseEntity.status(404).body("User with email " + account.getEmail() + " doesn't exist");
+            // user with email exists
+            if (response.getBody()) {
+                if (repo.existsByEmail(account.getEmail())) {
+                    return ResponseEntity.status(409).body("Bank account connected with email " + account.getEmail() + " already exists");
+                }
+                repo.save(account);
+                return ResponseEntity.status(201).body(account);
+            } else {
+                return ResponseEntity.status(404).body("User with email " + account.getEmail() + " doesn't exist");
+            }  
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
         }
     }
 
@@ -136,37 +141,44 @@ public class BankAccountController {
 
     @PutMapping("/bank-account")
     public ResponseEntity<?> editBankAccount(@RequestBody BankAccount account) {
-
-		if (repo.existsById(account.getId())) {
-            // send request to users microservice
-            ResponseEntity<Boolean> response = usersProxy.existsByEmail(account.getEmail());
-    
-            // user with email exists
-            if (response.getBody()) {
-                if (repo.existsByEmail(account.getEmail()) && repo.findByEmail(account.getEmail()).getId() != repo.findById(account.getId()).get().getId()) {
-                    return ResponseEntity.status(409).body("Bank account connected with email " + account.getEmail() + " already exists");
+        try {
+            if (repo.existsById(account.getId())) {
+                // send request to users microservice
+                ResponseEntity<Boolean> response = usersProxy.existsByEmail(account.getEmail());
+        
+                // user with email exists
+                if (response.getBody()) {
+                    if (repo.existsByEmail(account.getEmail()) && repo.findByEmail(account.getEmail()).getId() != repo.findById(account.getId()).get().getId()) {
+                        return ResponseEntity.status(409).body("Bank account connected with email " + account.getEmail() + " already exists");
+                    }
+                    repo.save(account);
+                    return ResponseEntity.status(200).body(account);
+                } else {
+                    return ResponseEntity.status(404).body("User with email " + account.getEmail() + " doesn't exist");
                 }
-                repo.save(account);
-                return ResponseEntity.status(200).body(account);
             } else {
-                return ResponseEntity.status(404).body("User with email " + account.getEmail() + " doesn't exist");
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body("User with id " + account.getId() + " doesn't exist");
             }
-        } else {
-		    return ResponseEntity.status(HttpStatus.NO_CONTENT).body("User with id " + account.getId() + " doesn't exist");
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
         }
     }
 
     @DeleteMapping("/bank-account/{id}")
     public ResponseEntity<?> deleteBankAccount(@PathVariable("id") Long id) {
-		if (repo.findById(id) != null) {
-            BankAccount account = repo.findById(id).get();
-			repo.delete(account);
+        try {
+            if (repo.findById(id) != null) {
+                BankAccount account = repo.findById(id).get();
+                repo.delete(account);
 
-            cryptoWalletProxy.deleteWallet(account.getEmail());
+                cryptoWalletProxy.deleteWallet(account.getEmail());
 
-			return ResponseEntity.status(HttpStatus.OK).body("Bank account successfully deleted");
-		}
-		return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Bank account with id " + id + " doesn't exist");
+                return ResponseEntity.status(HttpStatus.OK).body("Bank account successfully deleted");
+            }
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Bank account with id " + id + " doesn't exist");
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
+        }
     }
     
 	@GetMapping("/bank-account/{email}")
