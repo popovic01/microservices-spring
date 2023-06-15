@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 @RestController
 public class UserController {
@@ -44,7 +43,13 @@ public class UserController {
 	public ResponseEntity<?> createUser(@RequestBody CustomUser user, @RequestHeader("Authorization") String authorization) {
 		String email = getEmail(authorization);
 
-		if (repo.existsByEmailAndRole(email, "ADMIN") && !repo.findById(user.getId()).get().getRole().equalsIgnoreCase("USER"))
+		if (!user.getRole().equals("OWNER") && !user.getRole().equals("USER") && !user.getRole().equals("ADMIN"))
+			return ResponseEntity.status(400).body("Allowed values for role are USER, ADMIN and OWNER");
+
+		if (repo.existsByEmail(user.getEmail()))
+			return ResponseEntity.status(400).body("Already exists user with email " + user.getEmail());
+
+		if (repo.existsByEmailAndRole(email, "ADMIN") && !user.getRole().equalsIgnoreCase("USER"))
 			return ResponseEntity.status(403).body("You can only add user with USER role");
 
 		if (user.getRole().equals("OWNER")) {
@@ -59,10 +64,19 @@ public class UserController {
 
 	@PutMapping("/users-service/users")
 	public ResponseEntity<?> editUser(@RequestBody CustomUser user, @RequestHeader("Authorization") String authorization) {
+		
 		if (repo.existsById(user.getId())) {
 			String email = getEmail(authorization);
 		
-			if (repo.existsByEmailAndRole(email, "ADMIN") && !repo.findById(user.getId()).get().getRole().equalsIgnoreCase("USER"))
+			if (!user.getRole().equals("OWNER") && !user.getRole().equals("USER") && !user.getRole().equals("ADMIN"))
+				return ResponseEntity.status(400).body("Allowed values for role are USER, ADMIN and OWNER");
+
+			if (repo.existsByEmail(user.getEmail())) {
+				if (repo.findByEmail(user.getEmail()).getId() != user.getId())
+					return ResponseEntity.status(400).body("Already exists user with email " + user.getEmail());
+			}
+				
+			if (repo.existsByEmailAndRole(email, "ADMIN") && !user.getRole().equalsIgnoreCase("USER"))
 				return ResponseEntity.status(403).body("You can only update user with USER role");
 				
 			if (user.getRole().equals("OWNER") && user.getId() != repo.findByRole("OWNER").getId()) {
@@ -71,7 +85,7 @@ public class UserController {
 			repo.save(user);
 			return ResponseEntity.status(HttpStatus.OK).body(user);
 		}
-		return ResponseEntity.status(HttpStatus.NO_CONTENT).body("User with id " + user.getId() + "doesn't exist");
+		return ResponseEntity.status(204).body("User with id " + user.getId() + "doesn't exist");
 	}
 
 	@DeleteMapping("/users-service/users/{id}")
@@ -79,16 +93,13 @@ public class UserController {
 		if (repo.existsById(id)) {
 			String email = repo.findById(id).get().getEmail();
 			repo.deleteById(id);
-
-			HashMap<String, String> uriVariables = new HashMap<String, String>();
-            uriVariables.put("email", email);
 			
 			// deleting connected bank account and wallet
-			bankAccountProxy.deleteBankAccount(email);
+			bankAccountProxy.deleteBankAccount(id);
 			cryptoWalletProxy.deleteWallet(email);
 			return ResponseEntity.status(HttpStatus.OK).body("Successfully deleted user");
 		}
-		return ResponseEntity.status(HttpStatus.NO_CONTENT).body("User with id " + id + "doesn't exist");
+		return ResponseEntity.status(204).body("User with id " + id + "doesn't exist");
 	}
 
 	private String getEmail(String authorization) {

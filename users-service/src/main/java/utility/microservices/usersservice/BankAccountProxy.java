@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "bank-account")
 public interface BankAccountProxy {
     
-    @DeleteMapping("/bank-account/{email}")
-	public ResponseEntity<?> deleteBankAccount(@PathVariable("email") String email);
+    @DeleteMapping("/bank-account/{id}")
+	public ResponseEntity<?> deleteBankAccount(@PathVariable("id") Long id);
 }

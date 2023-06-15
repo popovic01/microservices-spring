@@ -3,7 +3,6 @@ package currency.microservices.tradeservice;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import currency.microservices.tradeservice.dtos.WalletAccountDto;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
@@ -37,7 +35,7 @@ public class TradeServiceController {
     
     //localhost:8600/trade-service?from=BTC&to=EUR&quantity=0.5 - request example
     @GetMapping("/trade-service")
-    @RateLimiter(name = "default")
+    // @RateLimiter(name = "default")
     public ResponseEntity<?> getExchange(@RequestParam String from, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity, 
         @RequestHeader("Authorization") String authorization) {
 
@@ -48,6 +46,7 @@ public class TradeServiceController {
         request.setQuantityActual(request.getQuantity());
 
         TradeService kurs;
+        ResponseEntity<WalletAccountDto> response;
 
         if (request.getFrom().toUpperCase().equals("GBP") 
             || request.getFrom().toUpperCase().equals("CHF") 
@@ -56,12 +55,12 @@ public class TradeServiceController {
             // convert to eur and then to crypto
 
             // send request to currency-exchange microservice
-            ResponseEntity<WalletAccountDto> response = currencyExchangeProxy.getExchange(request.getFrom().toUpperCase(), "EUR"); 
+            response = currencyExchangeProxy.getExchange(request.getFrom().toUpperCase(), "EUR"); 
                 
-            request.setFrom(response.getBody().getTo());
-            request.setQuantity(response.getBody().getToValue().multiply(request.getQuantity()));
-        }
-        else if (request.getTo().toUpperCase().equals("GBP") 
+            request.setFrom(response.getBody().getTo()); 
+            request.setQuantity(request.getQuantityActual().multiply(response.getBody().getToValue()));
+
+        } else if (request.getTo().toUpperCase().equals("GBP") 
             || request.getTo().toUpperCase().equals("CHF") 
             || request.getTo().toUpperCase().equals("RSD")) {
 
@@ -70,13 +69,13 @@ public class TradeServiceController {
             // convert to eur and then to fiat
 
             // send request to currency-exchange microservice
-            ResponseEntity<WalletAccountDto> response = currencyExchangeProxy.getExchange("EUR", request.getTo());
+            response = currencyExchangeProxy.getExchange("EUR", request.getTo());
                 
             request.setTo(response.getBody().getFrom());
-            request.setQuantity(response.getBody().getToValue().multiply(kurs.getToValue()));
+            request.setQuantity(request.getQuantityActual().multiply(response.getBody().getToValue()));
         }
 
-        kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()); //find this in database, based on from and to values
+        kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toUpperCase(), request.getTo().toUpperCase()); //find this in database, based on from and to values
 
         if (kurs != null) {
 
@@ -86,23 +85,22 @@ public class TradeServiceController {
             if (request.getFrom().toLowerCase().equals("btc") || request.getFrom().toLowerCase().equals("eth")
                 || request.getFrom().toLowerCase().equals("bnb") || request.getFrom().toLowerCase().equals("ada")) {
 
-                return ResponseEntity.status(200).body(cryptoToFiat(request, email).getBody());             
+                return ResponseEntity.status(200).body(cryptoToFiat(request, email, kurs).getBody());             
             }
             // fiat to crypto
             else if (request.getFrom().toLowerCase().equals("eur") || request.getFrom().toLowerCase().equals("usd"))
             {
-                request.setQuantity(kurs.getToValue());
-                return ResponseEntity.status(200).body(fiatToCrypto(request, email).getBody());
+                return ResponseEntity.status(200).body(fiatToCrypto(request, email, kurs).getBody());
             }
         } 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Requested exchange could not be found");
     }
 
-    private ResponseEntity<?> fiatToCrypto(TradeServiceDto request, String email)
+    private ResponseEntity<?> fiatToCrypto(TradeServiceDto request, String email, TradeService kurs)
     {
         // call bank account service, check if there is enough money and update bank account
         WalletAccountDto requestDto = new WalletAccountDto(email, request.getFromActual(), request.getTo(), request.getQuantityActual(), 
-            repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantityActual()));
+            kurs.getToValue().multiply(request.getQuantity()));
 
         // call crypto wallet service, check if there is enough money and update wallet  
         bankAccountProxy.conversion(requestDto);
@@ -112,13 +110,13 @@ public class TradeServiceController {
         return responseWallet;
     }
 
-    private ResponseEntity<?> cryptoToFiat(TradeServiceDto request, String email)
+    private ResponseEntity<?> cryptoToFiat(TradeServiceDto request, String email, TradeService kurs)
     {
         WalletAccountDto requestDto = new WalletAccountDto(email, request.getFrom(), request.getToActual(), request.getQuantityActual(), 
-            repo.findByFromAndToIgnoreCase(request.getFrom().toLowerCase(), request.getTo().toLowerCase()).getToValue().multiply(request.getQuantityActual()));
+            kurs.getToValue().multiply(request.getQuantity()));
 
         // call crypto wallet service, check if there is enough money and update wallet  
-    cryptoWalletProxy.conversion(requestDto);
+        cryptoWalletProxy.conversion(requestDto);
                             
         ResponseEntity<?> responseAccount = bankAccountProxy.conversion(requestDto);  
 

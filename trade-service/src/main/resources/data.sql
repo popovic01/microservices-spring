@@ -35,13 +35,13 @@ insert into trade_service(id,currency_from,currency_to,to_value)
 values(12,'EUR','ETH',0.00061);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(13,'ada','USD',0.27);
+values(13,'ADA','USD',0.27);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(14,'USD','ada',3.76);
+values(14,'USD','ADA',3.76);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(15,'ada','EUR',0.25);
+values(15,'ADA','EUR',0.25);
 
 insert into trade_service(id,currency_from,currency_to,to_value)
-values(16,'EUR','ada',4.04);
+values(16,'EUR','ADA',4.04);
