@@ -1,0 +1,5 @@
+FROM openjdk:17
+# isti port kao i u application properties
+EXPOSE 8200 
+ADD target/bank-account.jar bank-account.jar
+ENTRYPOINT ["java","-jar","/bank-account.jar"]

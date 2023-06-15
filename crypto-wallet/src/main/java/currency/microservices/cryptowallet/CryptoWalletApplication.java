@@ -1,4 +1,4 @@
-package main.java.currency.microservices.cryptowallet;
+package currency.microservices.cryptowallet;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

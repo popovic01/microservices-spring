@@ -1,0 +1,5 @@
+FROM openjdk:17
+# isti port kao i u application properties
+EXPOSE 8300 
+ADD target/crypto-wallet.jar crypto-wallet.jar
+ENTRYPOINT ["java","-jar","/crypto-wallet.jar"]

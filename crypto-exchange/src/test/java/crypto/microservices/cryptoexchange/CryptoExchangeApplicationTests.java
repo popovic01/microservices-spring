@@ -1,4 +1,4 @@
-package currency.microservices.cryptoexchange;
+package crypto.microservices.cryptoexchange;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

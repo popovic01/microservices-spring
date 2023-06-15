@@ -1,4 +1,4 @@
-package main.java.currency.microservices.cryptowallet;
+package currency.microservices.cryptowallet;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

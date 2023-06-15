@@ -1,4 +1,4 @@
-package main.java.currency.microservices.cryptowallet;
+package currency.microservices.cryptowallet;
 
 import java.util.List;
 
@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import feign.FeignException;
-import main.java.currency.microservices.cryptowallet.dtos.CryptoWalletDto;
-import main.java.currency.microservices.cryptowallet.dtos.CryptoWalletResponseDto;
+import currency.microservices.cryptowallet.dtos.CryptoWalletDto;
+import currency.microservices.cryptowallet.dtos.CryptoWalletResponseDto;
 
 @RestController
 public class CryptoWalletController {

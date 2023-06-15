@@ -1,4 +1,4 @@
-package main.java.currency.microservices.cryptowallet.dtos;
+package currency.microservices.cryptowallet.dtos;
 
 import java.math.BigDecimal;
 

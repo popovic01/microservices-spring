@@ -1,0 +1,5 @@
+FROM openjdk:17
+# isti port kao i u application properties
+EXPOSE 8600 
+ADD target/trade-service.jar trade-service.jar
+ENTRYPOINT ["java","-jar","/trade-service.jar"]

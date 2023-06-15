@@ -1,4 +1,4 @@
-package main.java.currency.microservices.cryptowallet;
+package currency.microservices.cryptowallet;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
