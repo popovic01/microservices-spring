@@ -18,6 +18,7 @@ import currency.microservices.currencyconversion.dtos.BankAccountDto;
 import feign.FeignException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
 
 @RestController
 public class CurrencyConversionController {
@@ -30,6 +31,7 @@ public class CurrencyConversionController {
 
     //localhost:8100/currency-conversion?from=EUR&to=RSD&quantity=50 - request example
 	@GetMapping("/currency-conversion") 
+    @Retry(name = "default", fallbackMethod = "response") 
     @RateLimiter(name = "default")
     public ResponseEntity<?> getConversionParams
         (@RequestParam String from, @RequestParam String to, @RequestParam(defaultValue = "10") double quantity, 
@@ -37,7 +39,6 @@ public class CurrencyConversionController {
 
 		String email = getEmail(authorization);
 
-        try {
             ResponseEntity<CurrencyConversion> response = proxy.getExchange(from, to);
 
             CurrencyConversion responseBody = response.getBody(); // the response contains ToValue and Environment
@@ -49,9 +50,7 @@ public class CurrencyConversionController {
             ResponseEntity<?> responseBank = bankAccountProxy.conversion(accountDto);
 
             return ResponseEntity.status(HttpStatus.OK).body(responseBank.getBody());
-        } catch (FeignException e) {
-            return ResponseEntity.status(e.status()).body(e.getMessage());
-        }
+
 	}
 
     private String getEmail(String authorization) {
@@ -74,5 +73,9 @@ public class CurrencyConversionController {
     @ExceptionHandler(RequestNotPermitted.class)
     public ResponseEntity<String> rateLimiterExceptionHandler(RequestNotPermitted ex) {
         return ResponseEntity.status(503).body("Currency conversion service can only serve up to 2 requests every 45 seconds");
+    }
+
+    public String response(Exception ex) {
+		return "Service is currently unavailable";
     }
 }

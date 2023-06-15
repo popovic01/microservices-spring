@@ -31,10 +31,10 @@ public class CircuitBreakerController {
     }
 
     public String hardCodedResponse(Exception ex) {
-		return "Service is currently unavailable";
+		  return "Service is currently unavailable";
     }
 
     public String circuitBreakerFallBack(Exception ex) {
-		return "Circuit breaker activated";
-	}
+		  return "Circuit breaker activated";
+	  }
 }
