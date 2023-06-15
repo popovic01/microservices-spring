@@ -2,7 +2,6 @@ package utility.microservices.usersservice;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+
+import feign.FeignException;
 
 @RestController
 public class UserController {
@@ -90,16 +91,20 @@ public class UserController {
 
 	@DeleteMapping("/users-service/users/{id}")
 	public ResponseEntity<?> deleteUser(@PathVariable("id") Long id) {
-		if (repo.existsById(id)) {
-			String email = repo.findById(id).get().getEmail();
-			repo.deleteById(id);
-			
-			// deleting connected bank account and wallet
-			bankAccountProxy.deleteBankAccount(id);
-			cryptoWalletProxy.deleteWallet(email);
-			return ResponseEntity.status(HttpStatus.OK).body("Successfully deleted user");
-		}
-		return ResponseEntity.status(204).body("User with id " + id + "doesn't exist");
+		try {
+			if (repo.existsById(id)) {
+				String email = repo.findById(id).get().getEmail();
+				repo.deleteById(id);
+				
+				// deleting connected bank account and wallet
+				bankAccountProxy.deleteBankAccount(id);
+				cryptoWalletProxy.deleteWallet(email);
+				return ResponseEntity.status(HttpStatus.OK).body("Successfully deleted user");
+			}
+			return ResponseEntity.status(204).body("User with id " + id + "doesn't exist");
+		} catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
+        }
 	}
 
 	private String getEmail(String authorization) {

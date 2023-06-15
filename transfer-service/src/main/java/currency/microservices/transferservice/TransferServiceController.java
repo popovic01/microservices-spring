@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import currency.microservices.transferservice.dtos.TransferServiceDto;
+import feign.FeignException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
@@ -35,42 +36,46 @@ public class TransferServiceController {
 		String email = getEmail(authorization);
         TransferServiceDto requestDto = new TransferServiceDto(email, to, currency, quantity + quantity * 0.01, quantity);
 
-        Boolean toEmailExists = cryptoWalletProxy.getByEmail(email);
+        try {
+            Boolean toEmailExists = cryptoWalletProxy.getByEmail(email);
 
-        if (currency.equals("EUR") || currency.equals("USD") || currency.equals("GBP") 
-            || currency.equals("CHF") || currency.equals("RSD")) {
+            if (currency.equals("EUR") || currency.equals("USD") || currency.equals("GBP") 
+                || currency.equals("CHF") || currency.equals("RSD")) {
 
-            if (!toEmailExists)
-		        return ResponseEntity.status(404).body("Bank account with email " + to + " doesn't exist");
+                if (!toEmailExists)
+                    return ResponseEntity.status(404).body("Bank account with email " + to + " doesn't exist");
 
-            // subtract from the account
-            bankAccountProxy.conversion(requestDto);
+                // subtract from the account
+                bankAccountProxy.conversion(requestDto);
 
-            requestDto.setEmail(to);
-            requestDto.setTo(currency);
-            requestDto.setToValue(quantity);
-            requestDto.setFrom("");
-            // add to the account
-            bankAccountProxy.conversion(requestDto);
+                requestDto.setEmail(to);
+                requestDto.setTo(currency);
+                requestDto.setToValue(quantity);
+                requestDto.setFrom("");
+                // add to the account
+                bankAccountProxy.conversion(requestDto);
 
-        } else if (currency.equals("BTC") || currency.equals("ETH") 
-            || currency.equals("ADA") || currency.equals("BNB")) {
+            } else if (currency.equals("BTC") || currency.equals("ETH") 
+                || currency.equals("ADA") || currency.equals("BNB")) {
 
-            if (!toEmailExists)
-		        return ResponseEntity.status(404).body("Crypto wallet with email " + to + " doesn't exist");
+                if (!toEmailExists)
+                    return ResponseEntity.status(404).body("Crypto wallet with email " + to + " doesn't exist");
 
-            // subtract from the account
-            cryptoWalletProxy.conversion(requestDto);  
+                // subtract from the account
+                cryptoWalletProxy.conversion(requestDto);  
 
-            requestDto.setEmail(to);
-            requestDto.setTo(currency);
-            requestDto.setToValue(quantity);
-            requestDto.setFrom("");
-            // add to the account
-            cryptoWalletProxy.conversion(requestDto);  
+                requestDto.setEmail(to);
+                requestDto.setTo(currency);
+                requestDto.setToValue(quantity);
+                requestDto.setFrom("");
+                // add to the account
+                cryptoWalletProxy.conversion(requestDto);  
 
-        } else {
-            return ResponseEntity.status(400).body("Currency " + currency + " doesn't exist");
+            } else {
+                return ResponseEntity.status(400).body("Currency " + currency + " doesn't exist");
+            }
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
         }
 
         return ResponseEntity.status(200).body("The transfer was successfully completed from the " + email + " account to the " + to + " account, with an amount of " + quantity + " and currency denoted as " + currency);

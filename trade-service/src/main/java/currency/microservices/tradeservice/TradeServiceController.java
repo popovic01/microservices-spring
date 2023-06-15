@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import currency.microservices.tradeservice.dtos.WalletAccountDto;
+import feign.FeignException;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import currency.microservices.tradeservice.dtos.TradeServiceDto;
@@ -48,31 +49,35 @@ public class TradeServiceController {
         TradeService kurs;
         ResponseEntity<WalletAccountDto> response;
 
-        if (request.getFrom().toUpperCase().equals("GBP") 
-            || request.getFrom().toUpperCase().equals("CHF") 
-            || request.getFrom().toUpperCase().equals("RSD")) {
-            
-            // convert to eur and then to crypto
-
-            // send request to currency-exchange microservice
-            response = currencyExchangeProxy.getExchange(request.getFrom().toUpperCase(), "EUR"); 
+        try {
+            if (request.getFrom().toUpperCase().equals("GBP") 
+                || request.getFrom().toUpperCase().equals("CHF") 
+                || request.getFrom().toUpperCase().equals("RSD")) {
                 
-            request.setFrom(response.getBody().getTo()); 
-            request.setQuantity(request.getQuantityActual().multiply(response.getBody().getToValue()));
+                // convert to eur and then to crypto
 
-        } else if (request.getTo().toUpperCase().equals("GBP") 
-            || request.getTo().toUpperCase().equals("CHF") 
-            || request.getTo().toUpperCase().equals("RSD")) {
+                // send request to currency-exchange microservice
+                response = currencyExchangeProxy.getExchange(request.getFrom().toUpperCase(), "EUR"); 
+                    
+                request.setFrom(response.getBody().getTo()); 
+                request.setQuantity(request.getQuantityActual().multiply(response.getBody().getToValue()));
 
-            kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toUpperCase(), "EUR"); 
+            } else if (request.getTo().toUpperCase().equals("GBP") 
+                || request.getTo().toUpperCase().equals("CHF") 
+                || request.getTo().toUpperCase().equals("RSD")) {
 
-            // convert to eur and then to fiat
+                kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toUpperCase(), "EUR"); 
 
-            // send request to currency-exchange microservice
-            response = currencyExchangeProxy.getExchange("EUR", request.getTo());
-                
-            request.setTo(response.getBody().getFrom());
-            request.setQuantity(request.getQuantityActual().multiply(response.getBody().getToValue()));
+                // convert to eur and then to fiat
+
+                // send request to currency-exchange microservice
+                response = currencyExchangeProxy.getExchange("EUR", request.getTo());
+                    
+                request.setTo(response.getBody().getFrom());
+                request.setQuantity(request.getQuantityActual().multiply(response.getBody().getToValue()));
+            }
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
         }
 
         kurs = repo.findByFromAndToIgnoreCase(request.getFrom().toUpperCase(), request.getTo().toUpperCase()); //find this in database, based on from and to values
@@ -98,29 +103,37 @@ public class TradeServiceController {
 
     private ResponseEntity<?> fiatToCrypto(TradeServiceDto request, String email, TradeService kurs)
     {
-        // call bank account service, check if there is enough money and update bank account
-        WalletAccountDto requestDto = new WalletAccountDto(email, request.getFromActual(), request.getTo(), request.getQuantityActual(), 
-            kurs.getToValue().multiply(request.getQuantity()));
+        try {
+            // call bank account service, check if there is enough money and update bank account
+            WalletAccountDto requestDto = new WalletAccountDto(email, request.getFromActual(), request.getTo(), request.getQuantityActual(), 
+                kurs.getToValue().multiply(request.getQuantity()));
 
-        // call crypto wallet service, check if there is enough money and update wallet  
-        bankAccountProxy.conversion(requestDto);
-                            
-        ResponseEntity<?> responseWallet = cryptoWalletProxy.conversion(requestDto);
- 
-        return responseWallet;
+            // call crypto wallet service, check if there is enough money and update wallet  
+            bankAccountProxy.conversion(requestDto);
+                                
+            ResponseEntity<?> responseWallet = cryptoWalletProxy.conversion(requestDto);
+    
+            return responseWallet;
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
+        }
     }
 
     private ResponseEntity<?> cryptoToFiat(TradeServiceDto request, String email, TradeService kurs)
     {
-        WalletAccountDto requestDto = new WalletAccountDto(email, request.getFrom(), request.getToActual(), request.getQuantityActual(), 
-            kurs.getToValue().multiply(request.getQuantity()));
+        try {
+            WalletAccountDto requestDto = new WalletAccountDto(email, request.getFrom(), request.getToActual(), request.getQuantityActual(), 
+                kurs.getToValue().multiply(request.getQuantity()));
 
-        // call crypto wallet service, check if there is enough money and update wallet  
-        cryptoWalletProxy.conversion(requestDto);
-                            
-        ResponseEntity<?> responseAccount = bankAccountProxy.conversion(requestDto);  
+            // call crypto wallet service, check if there is enough money and update wallet  
+            cryptoWalletProxy.conversion(requestDto);
+                                
+            ResponseEntity<?> responseAccount = bankAccountProxy.conversion(requestDto);  
 
-        return responseAccount;
+            return responseAccount;
+        } catch (FeignException e) {
+            return ResponseEntity.status(e.status()).body(e.getMessage());
+        }
     }
 
     private String getEmail(String authorization) {
