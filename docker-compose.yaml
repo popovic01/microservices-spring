@@ -1,0 +1,137 @@
+version: '3.7'
+
+services: 
+  currency-exchange:
+    image: milica01/currency-exchange:latest
+    mem_limit: 700m
+    ports:
+      - "8000:8000"
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka     
+      
+  currency-conversion:
+    image: milica01/currency-conversion:latest
+    mem_limit: 700m
+    ports:
+      - "8100:8100"
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka   
+      
+  bank-account:
+    image: milica01/bank-account:latest
+    mem_limit: 700m
+    ports:
+      - "8200:8200"
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka   
+      
+  crypto-exchange:
+    image: milica01/crypto-exchange:latest
+    mem_limit: 700m
+    ports:
+      - "8400:8400"
+    networks:
+      - crypto-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka 
+      
+  crypto-conversion:
+    image: milica01/crypto-conversion:latest
+    mem_limit: 700m
+    ports:
+      - "8500:8500"
+    networks:
+      - crypto-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka 
+      
+  crypto-wallet:
+    image: milica01/crypto-wallet:latest
+    mem_limit: 700m
+    ports:
+      - "8300:8300"
+    networks:
+      - crypto-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka 
+      
+  users-service:
+    image: milica01/users-service:latest
+    mem_limit: 700m
+    ports:
+      - "8770:8770"
+    networks:
+      - common-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka 
+      
+  api-gateway:
+    image: milica01/api-gateway:latest
+    mem_limit: 700m
+    ports:
+      - "8765:8765"
+    networks:
+      - common-network
+      - crypto-network
+    depends_on:
+      - naming-server
+      - users-service
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka 
+      
+  transfer-service:
+    image: milica01/transfer-service:latest
+    mem_limit: 700m
+    ports:
+      - "8700:8700"
+    networks:
+      - common-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka 
+      
+  trade-service:
+    image: milica01/trade-service:latest
+    mem_limit: 700m
+    ports:
+      - "8600:8600"
+    networks:
+      - common-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka 
+      
+  naming-server:
+    image: milica01/naming-server:latest
+    mem_limit: 700m
+    ports:
+      - "8761:8761"
+    networks:
+      - common-network        
+ 
+networks:
+  currency-network:
+  crypto-network:
+  common-network:
